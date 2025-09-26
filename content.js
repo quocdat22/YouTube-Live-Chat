@@ -38,6 +38,7 @@
                     // Check if we're on a YouTube video page
                     if (window.location.href.includes('youtube.com/watch')) {
                         showChatOverlay();
+                        updateChatSource();
                     }
                 } else {
                     hideChatOverlay();
@@ -124,7 +125,9 @@
                         if (isLoggedIn) {
                             const chatUrl = `https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${window.location.hostname}`;
                             const iframe = chatOverlay.querySelector('#yt-chat-iframe');
-                            iframe.src = chatUrl;
+                            if (iframe.src !== chatUrl) {
+                                iframe.src = chatUrl;
+                            }
                         } else {
                             // Show a message about needing to be logged in
                             const iframe = chatOverlay.querySelector('#yt-chat-iframe');
@@ -135,7 +138,9 @@
                         // If we can't determine login status, just load the chat
                         const chatUrl = `https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${window.location.hostname}`;
                         const iframe = chatOverlay.querySelector('#yt-chat-iframe');
-                        iframe.src = chatUrl;
+                        if (iframe.src !== chatUrl) {
+                            iframe.src = chatUrl;
+                        }
                     });
                 } else {
                     // For non-live streams, show a message or hide the chat
@@ -148,7 +153,9 @@
                 // If there's an error checking if it's a live stream, try loading the chat anyway
                 const chatUrl = `https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${window.location.hostname}`;
                 const iframe = chatOverlay.querySelector('#yt-chat-iframe');
-                iframe.src = chatUrl;
+                if (iframe.src !== chatUrl) {
+                    iframe.src = chatUrl;
+                }
             });
         }
     }
@@ -213,9 +220,7 @@
 
     // Observe for URL changes in single-page applications
     const observer = new MutationObserver(function(mutations) {
-        if (isFullscreen && window.location.href.includes('youtube.com/watch')) {
-            updateChatSource();
-        } else if (isFullscreen && !window.location.href.includes('youtube.com/watch')) {
+        if (isFullscreen && !window.location.href.includes('youtube.com/watch')) {
             // If we're fullscreen but not on a YouTube watch page, hide the chat
             hideChatOverlay();
         }
