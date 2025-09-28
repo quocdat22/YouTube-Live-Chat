@@ -139,13 +139,35 @@ new MutationObserver(function() {
     subtree: true
 });
 
-// Adjust the chat overlay size when window resizes
+// Adjust the chat overlay size and position when window resizes
 window.addEventListener('resize', function() {
     if (chatOverlay && isFullscreen) {
         const overlay = document.getElementById('yt-fullscreen-chat-overlay');
         if (overlay) {
-            overlay.style.width = window.innerWidth < 800 ? '250px' : '400px';
+            const newWidth = window.innerWidth < 800 ? 250 : 400;
+            overlay.style.width = newWidth + 'px';
             overlay.style.height = window.innerWidth < 800 ? '50%' : '70%';
+
+            // Adjust position if outside viewport
+            const rect = overlay.getBoundingClientRect();
+            let newLeft = rect.left;
+            let newTop = rect.top;
+
+            if (rect.right > window.innerWidth) {
+                newLeft = window.innerWidth - rect.width;
+            }
+            if (rect.left < 0) {
+                newLeft = 0;
+            }
+            if (rect.bottom > window.innerHeight) {
+                newTop = window.innerHeight - rect.height;
+            }
+            if (rect.top < 0) {
+                newTop = 0;
+            }
+
+            overlay.style.left = newLeft + 'px';
+            overlay.style.top = newTop + 'px';
         }
     }
 });
