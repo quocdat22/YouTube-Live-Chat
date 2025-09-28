@@ -24,7 +24,7 @@ export function showChatOverlay() {
     const chatOverlay = document.createElement('div');
     chatOverlay.id = 'yt-fullscreen-chat-overlay';
     chatOverlay.innerHTML = `
-        <div id="chat-header">
+        <div id="chat-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; height: 40px; box-sizing: border-box;">
             <span>YouTube Live Chat</span>
             <button id="close-chat-btn" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">×</button>
         </div>
