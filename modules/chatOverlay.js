@@ -8,6 +8,7 @@ import { loadSavedPosition, constrainPosition, applySavedPosition, savePosition 
 import { setupControls } from './overlayControls.js';
 import { setupDragging } from './overlayDrag.js';
 import { setupKeyboard } from './overlayKeyboard.js';
+import { setupResizing } from './overlayResize.js';
 import { updateChatSource as updateChat } from './overlayChat.js';
 
 /**
@@ -43,6 +44,9 @@ export function showChatOverlay() {
 
     // Set up dragging
     setupDragging(chatOverlay, savePosition, (left, top, overlay) => constrainPosition(left, top, overlay));
+
+    // Set up resizing
+    setupResizing(chatOverlay);
 
     // Set up keyboard navigation
     setupKeyboard(chatOverlay, savePosition, (left, top, overlay) => constrainPosition(left, top, overlay));

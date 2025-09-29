@@ -1,6 +1,6 @@
 /**
  * Overlay Positioning Module
- * Handles position management, constraints, and localStorage persistence.
+ * Handles position and size management, constraints, and localStorage persistence.
  */
 
 /**
@@ -16,6 +16,21 @@ export function loadSavedPosition() {
         localStorage.removeItem('ytChatPosition');
     }
     return savedPosition;
+}
+
+/**
+ * Loads the saved size from localStorage.
+ * @returns {Object} The saved size object with width and height properties, or empty object if none.
+ */
+export function loadSavedSize() {
+    let savedSize = {};
+    try {
+        savedSize = JSON.parse(localStorage.getItem('ytChatSize') || '{}');
+    } catch (e) {
+        console.error('Error parsing saved size:', e);
+        localStorage.removeItem('ytChatSize');
+    }
+    return savedSize;
 }
 
 /**
@@ -57,4 +72,45 @@ export function applySavedPosition(overlay, savedPosition) {
 export function savePosition(left, top) {
     const position = { left, top };
     localStorage.setItem('ytChatPosition', JSON.stringify(position));
+}
+
+/**
+ * Constrains the size within min and max bounds.
+ * @param {number} width - The desired width.
+ * @param {number} height - The desired height.
+ * @returns {Object} Object with constrained width and height.
+ */
+export function constrainSize(width, height) {
+    const minWidth = 200;
+    const minHeight = 150;
+    const maxWidth = 800;
+    const maxHeight = 600;
+    return {
+        width: Math.max(minWidth, Math.min(width, maxWidth)),
+        height: Math.max(minHeight, Math.min(height, maxHeight))
+    };
+}
+
+/**
+ * Applies the saved size to the overlay element.
+ * @param {HTMLElement} overlay - The overlay element.
+ * @param {Object} savedSize - The saved size object.
+ */
+export function applySavedSize(overlay, savedSize) {
+    if (savedSize.width !== undefined && savedSize.height !== undefined) {
+        const constrained = constrainSize(savedSize.width, savedSize.height);
+        overlay.style.width = constrained.width + 'px';
+        overlay.style.height = constrained.height + 'px';
+        console.log('Applied saved size:', constrained);
+    }
+}
+
+/**
+ * Saves the current size to localStorage.
+ * @param {number} width - The width.
+ * @param {number} height - The height.
+ */
+export function saveSize(width, height) {
+    const size = { width, height };
+    localStorage.setItem('ytChatSize', JSON.stringify(size));
 }

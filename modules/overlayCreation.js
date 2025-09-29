@@ -3,6 +3,8 @@
  * Handles the creation of the chat overlay HTML structure and initial styling.
  */
 
+import { loadSavedSize, applySavedSize } from './overlayPositioning.js';
+
 /**
  * Creates the chat overlay element with initial structure and styles.
  * @returns {HTMLElement} The created chat overlay element.
@@ -30,6 +32,15 @@ export function createOverlayElement() {
             allow="autoplay; encrypted-media"
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox allow-same-origin allow-orientation-lock allow-pointer-lock">
         </iframe>
+        <!-- Resize handles -->
+        <div class="resize-handle resize-handle-nw" style="position: absolute; top: 0; left: 0; width: 10px; height: 10px; cursor: nw-resize; background: rgba(255,255,255,0.1);"></div>
+        <div class="resize-handle resize-handle-ne" style="position: absolute; top: 0; right: 0; width: 10px; height: 10px; cursor: ne-resize; background: rgba(255,255,255,0.1);"></div>
+        <div class="resize-handle resize-handle-sw" style="position: absolute; bottom: 0; left: 0; width: 10px; height: 10px; cursor: sw-resize; background: rgba(255,255,255,0.1);"></div>
+        <div class="resize-handle resize-handle-se" style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; cursor: se-resize; background: rgba(255,255,255,0.1);"></div>
+        <div class="resize-handle resize-handle-n" style="position: absolute; top: 0; left: 10px; right: 10px; height: 5px; cursor: n-resize; background: rgba(255,255,255,0.1);"></div>
+        <div class="resize-handle resize-handle-s" style="position: absolute; bottom: 0; left: 10px; right: 10px; height: 5px; cursor: s-resize; background: rgba(255,255,255,0.1);"></div>
+        <div class="resize-handle resize-handle-w" style="position: absolute; top: 10px; left: 0; bottom: 10px; width: 5px; cursor: w-resize; background: rgba(255,255,255,0.1);"></div>
+        <div class="resize-handle resize-handle-e" style="position: absolute; top: 10px; right: 0; bottom: 10px; width: 5px; cursor: e-resize; background: rgba(255,255,255,0.1);"></div>
     `;
 
     // Position the overlay with responsive dimensions
@@ -50,6 +61,10 @@ export function createOverlayElement() {
     chatOverlay.style.left = initialLeft + 'px';
     chatOverlay.style.top = '10%';
     console.log('Set initial position: left=' + initialLeft + ', top=10%');
+
+    // Load and apply saved size
+    const savedSize = loadSavedSize();
+    applySavedSize(chatOverlay, savedSize);
 
     console.log('Applying styles to overlay, width:', chatOverlay.style.width, 'height:', chatOverlay.style.height);
 

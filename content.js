@@ -144,9 +144,22 @@ window.addEventListener('resize', function() {
     if (chatOverlay && isFullscreen) {
         const overlay = document.getElementById('yt-fullscreen-chat-overlay');
         if (overlay) {
+            const currentWidth = parseFloat(overlay.style.width);
+            const currentHeight = overlay.style.height;
             const newWidth = window.innerWidth < 800 ? 250 : 400;
-            overlay.style.width = newWidth + 'px';
-            overlay.style.height = window.innerWidth < 800 ? '50%' : '70%';
+            const newHeightPercent = window.innerWidth < 800 ? 0.5 : 0.7;
+            const newHeightPx = window.innerHeight * newHeightPercent;
+
+            // Preserve custom width but clamp to new max
+            overlay.style.width = Math.min(currentWidth, newWidth) + 'px';
+
+            // Preserve custom height if in px, else update to new %
+            if (currentHeight.includes('%')) {
+                overlay.style.height = (newHeightPercent * 100) + '%';
+            } else {
+                const currentHeightPx = parseFloat(currentHeight);
+                overlay.style.height = Math.min(currentHeightPx, newHeightPx) + 'px';
+            }
 
             // Adjust position if outside viewport
             const rect = overlay.getBoundingClientRect();
