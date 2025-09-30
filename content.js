@@ -10,6 +10,7 @@
         try {
             const { showChatOverlay, hideChatOverlay, updateChatSource } = await import(chrome.runtime.getURL('./modules/chatOverlay.js'));
             const { checkFullscreen } = await import(chrome.runtime.getURL('./modules/fullscreenHandler.js'));
+            const { getYouTubeVideoId } = await import(chrome.runtime.getURL('./modules/youtubeUtils.js'));
 
 /*************
  * Main Execution
@@ -40,15 +41,16 @@ function onFullscreenChange() {
 
             if (newIsFullscreen) {
                 // Check if we're on a YouTube video page
-                if (window.location.href.includes('youtube.com/watch')) {
-                    console.log('On YouTube video page in fullscreen, showing chat...');
+                const videoId = getYouTubeVideoId(window.location.href);
+                if (videoId) {
+                    console.log('On YouTube video page in fullscreen, showing chat... Video ID:', videoId);
                     chatOverlay = showChatOverlay();
                     console.log('Created chat overlay:', chatOverlay);
                     if (chatOverlay) {
                         updateChatSource(chatOverlay);
                     }
                 } else {
-                    console.log('Not on YouTube video page, not showing chat');
+                    console.log('Not on YouTube video page, not showing chat. URL:', window.location.href);
                 }
             } else {
                 console.log('Exited fullscreen, hiding chat...');
@@ -86,23 +88,26 @@ window.addEventListener('load', function() {
         isFullscreen = checkFullscreen();
         console.log('Current fullscreen status:', isFullscreen);
         console.log('Current URL:', window.location.href);
-        if (isFullscreen && window.location.href.includes('youtube.com/watch')) {
-            console.log('In fullscreen mode on YouTube, showing chat overlay...');
+        const videoId = getYouTubeVideoId(window.location.href);
+        if (isFullscreen && videoId) {
+            console.log('In fullscreen mode on YouTube, showing chat overlay... Video ID:', videoId);
             chatOverlay = showChatOverlay();
             console.log('Chat overlay created:', chatOverlay);
             if (chatOverlay) {
                 updateChatSource(chatOverlay);
             }
         } else {
-            console.log('Not in fullscreen or not on YouTube, skipping chat overlay');
+            console.log('Not in fullscreen or not on YouTube, skipping chat overlay. Video ID:', videoId, 'Fullscreen:', isFullscreen);
         }
     }, 1000); // Slight delay to ensure page is loaded
 });
 
 // Observe for URL changes in single-page applications
 const observer = new MutationObserver(function(mutations) {
-    if (isFullscreen && !window.location.href.includes('youtube.com/watch')) {
-        // If we're fullscreen but not on a YouTube watch page, hide the chat
+    const videoId = getYouTubeVideoId(window.location.href);
+    if (isFullscreen && !videoId) {
+        // If we're fullscreen but not on a YouTube video page, hide the chat
+        console.log('Navigated away from YouTube video page in fullscreen, hiding chat. Video ID:', videoId);
         if (chatOverlay) {
             hideChatOverlay();
         } else {
@@ -118,14 +123,17 @@ let currentHref = location.href;
 new MutationObserver(function() {
     if (currentHref !== location.href) {
         currentHref = location.href;
+        const videoId = getYouTubeVideoId(location.href);
 
-        // If we're on a YouTube watch page and in fullscreen, make sure chat is updated
-        if (isFullscreen && location.href.includes('youtube.com/watch')) {
+        // If we're on a YouTube video page and in fullscreen, make sure chat is updated
+        if (isFullscreen && videoId) {
+            console.log('URL changed to YouTube video page in fullscreen, updating chat. Video ID:', videoId);
             if (chatOverlay) {
                 updateChatSource(chatOverlay);
             }
-        } else if (isFullscreen && !window.location.href.includes('youtube.com/watch')) {
+        } else if (isFullscreen && !videoId) {
             // If we've navigated away from YouTube while in fullscreen, hide chat
+            console.log('Navigated away from YouTube video page in fullscreen, hiding chat. Video ID:', videoId);
             if (chatOverlay) {
                 hideChatOverlay();
             } else {

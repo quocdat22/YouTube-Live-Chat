@@ -101,7 +101,7 @@
 
 ### 1. Visual design
 - [ ] Overlay design is non-intrusive
-- [ ] Text is readable on video backgrounds
+- [ ] Text is readable on video
 - [ ] Colors and contrast are appropriate
 - [ ] UI elements are intuitive
 

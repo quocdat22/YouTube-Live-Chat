@@ -82,8 +82,8 @@ youtube-live-chat-fullscreen/
 - **Yêu cầu**:
   - Responsive với các kích thước màn hình
   - Không che khuất nội dung video quan trọng
-  - Dễ đọc trên background video
-  - Semi-transparent background
+  - Dễ đọc trên video
+  
 
 ## 📝 Chi tiết implementation
 
@@ -174,7 +174,7 @@ youtube-live-chat-fullscreen/
 
 ### UX
 - Không che khuất nội dung video quan trọng
-- Đảm bảo chat dễ đọc trên mọi background
+- Đảm bảo chat dễ đọc
 - Balance giữa visibility và non-intrusive
 
 ## 📚 Resources & References
@@ -221,7 +221,7 @@ youtube-live-chat-fullscreen/
 - Position: Fixed ở góc phải màn hình
 - Width: 300-400px (có thể điều chỉnh)
 - Height: 40-60% screen height
-- Opacity: 80-90% cho background
+- Opacity: 80-90% cho nền
 - Z-index: Đủ cao để nổi trên video controls
 
 ---

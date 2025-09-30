@@ -76,6 +76,7 @@ export function createOverlayElement() {
                         <span>Show Chat Ticker</span>
                     </label>
                 </div>
+
                 <button id="close-settings-modal" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Close</button>
             </div>
         </div>

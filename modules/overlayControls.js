@@ -60,6 +60,12 @@ function applyHistoryState(doc) {
     });
 }
 
+
+
+
+
+
+
 /**
  * Sets up the control buttons for the overlay.
  * @param {HTMLElement} overlay - The chat overlay element.
@@ -174,6 +180,8 @@ export function setupControls(overlay, hideChatOverlay) {
         showChatTickerCheckbox.checked = showChatTicker;
     });
 
+
+
     if (showHistoryCheckbox) {
         showHistoryCheckbox.addEventListener('change', () => {
             const showHistory = showHistoryCheckbox.checked;
@@ -245,6 +253,8 @@ export function setupControls(overlay, hideChatOverlay) {
             }
         });
     }
+
+
 
     return { isMinimized, originalSize };
 }

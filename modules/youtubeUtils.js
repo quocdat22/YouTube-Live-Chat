@@ -10,10 +10,10 @@
  */
 export function getYouTubeVideoId(url) {
     console.log('getYouTubeVideoId called with URL:', url);
-    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?)|(live\/))\??v?=?([^#&?]*).*/;
     const match = url.match(regExp);
     console.log('URL match result:', match);
-    const videoId = (match && match[7].length === 11) ? match[7] : null;
+    const videoId = (match && match[8].length === 11) ? match[8] : null;
     console.log('Extracted video ID:', videoId);
 
     // Validate video ID format (should be 11 alphanumeric characters)
