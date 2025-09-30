@@ -21,6 +21,7 @@ export function createOverlayElement() {
         <div id="chat-header" role="banner" aria-label="YouTube Live Chat Controls" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; height: 40px; box-sizing: border-box; cursor: move;">
             <span id="chat-title" aria-label="YouTube Live Chat">YouTube Live Chat</span>
             <div style="display: flex; gap: 5px;">
+                <button id="settings-btn" aria-label="Settings" style="background: none; border: none; cursor: pointer;"><img id="settings-icon" style="width: 16px; height: 16px;" /></button>
                 <button id="minimize-chat-btn" aria-label="Minimize chat" style="background: none; border: none; color: white; cursor: pointer; font-size: 16px;">−</button>
                 <button id="close-chat-btn" aria-label="Close chat" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">×</button>
             </div>
@@ -41,12 +42,31 @@ export function createOverlayElement() {
         <div class="resize-handle resize-handle-s" style="position: absolute; bottom: 0; left: 10px; right: 10px; height: 5px; cursor: s-resize; background: rgba(255,255,255,0.1);"></div>
         <div class="resize-handle resize-handle-w" style="position: absolute; top: 10px; left: 0; bottom: 10px; width: 5px; cursor: w-resize; background: rgba(255,255,255,0.1);"></div>
         <div class="resize-handle resize-handle-e" style="position: absolute; top: 10px; right: 0; bottom: 10px; width: 5px; cursor: e-resize; background: rgba(255,255,255,0.1);"></div>
+        <!-- Settings Modal -->
+        <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2147483648; font-family: Arial, sans-serif;">
+            <div id="settings-modal-content" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); min-width: 250px;">
+                <h3 style="margin: 0 0 15px 0; font-size: 18px;">Settings</h3>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="show-history-checkbox" checked style="cursor: pointer;">
+                        <span>Show History</span>
+                    </label>
+                </div>
+                <button id="close-settings-modal" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Close</button>
+            </div>
+        </div>
     `;
+
+    // Set the settings icon source
+    const settingsIcon = chatOverlay.querySelector('#settings-icon');
+    if (settingsIcon) {
+        settingsIcon.src = chrome.runtime.getURL('icons/setting.png');
+    }
 
     // Position the overlay with responsive dimensions
     chatOverlay.style.position = 'fixed';
     const initialWidth = window.innerWidth < 800 ? 250 : 400;
-    const initialHeight = window.innerWidth < 800 ? '50%' : '70%';
+    const initialHeight = window.innerWidth < 800 ? '150px' : '200px';
     chatOverlay.style.width = initialWidth + 'px';
     chatOverlay.style.height = initialHeight;
     chatOverlay.style.zIndex = '2147483647'; // Maximum z-index value

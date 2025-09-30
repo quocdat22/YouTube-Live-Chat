@@ -20,7 +20,7 @@
     "128": "icons/icon128.png"
   },
   "web_accessible_resources": [{
-    "resources": ["modules/*.js"],
+    "resources": ["modules/*.js", "icons/*.png"],
     "matches": ["*://*.youtube.com/*"]
   }]
 }

@@ -6,6 +6,54 @@
 import { getYouTubeVideoId, checkIfUserLoggedIn, checkIfLiveStream } from './youtubeUtils.js';
 
 /**
+ * Hides the message list in the chat iframe to show only header and input.
+ * @param {HTMLIFrameElement} iframe - The chat iframe element.
+ */
+function applyHistoryState(doc, show) {
+    const messageList = doc.querySelector('#items.yt-live-chat-item-list-renderer');
+    const inputRenderer = doc.querySelector('yt-live-chat-message-input-renderer');
+    const headerRenderer = doc.querySelector('yt-live-chat-header-renderer');
+    if (show) {
+        if (messageList) messageList.style.display = '';
+        if (inputRenderer) {
+            inputRenderer.style.position = '';
+            inputRenderer.style.top = '';
+            inputRenderer.style.left = '';
+            inputRenderer.style.right = '';
+            inputRenderer.style.bottom = '';
+        }
+        if (headerRenderer) headerRenderer.style.display = '';
+    } else {
+        if (messageList) messageList.style.display = 'none';
+        if (inputRenderer) {
+            inputRenderer.style.position = 'absolute';
+            inputRenderer.style.top = '0';
+            inputRenderer.style.left = '0';
+            inputRenderer.style.right = '0';
+            inputRenderer.style.bottom = 'auto';
+        }
+        if (headerRenderer) headerRenderer.style.display = 'none';
+    }
+}
+
+function hideMessageList(iframe) {
+    iframe.onload = () => {
+        try {
+            const doc = iframe.contentDocument;
+            if (doc) {
+                chrome.storage.local.get(['showHistory'], (result) => {
+                    const show = result.showHistory !== false; // default to true
+                    applyHistoryState(doc, show);
+                    console.log('Applied history state:', show ? 'shown' : 'hidden');
+                });
+            }
+        } catch (error) {
+            console.error('Error modifying chat iframe:', error);
+        }
+    };
+}
+
+/**
  * Updates the chat iframe source based on the current YouTube video.
  * @param {HTMLElement} chatOverlay - The chat overlay element.
  */
@@ -34,6 +82,7 @@ export async function updateChatSource(chatOverlay) {
                         console.log('Found iframe:', iframe);
                         if (iframe && iframe.src !== chatUrl) {
                             iframe.src = chatUrl;
+                            hideMessageList(iframe);
                             console.log('Set iframe source to:', chatUrl);
                         } else if (iframe) {
                             console.log('Iframe source already set to:', iframe.src);
@@ -54,6 +103,7 @@ export async function updateChatSource(chatOverlay) {
                     const iframe = chatOverlay.querySelector('#yt-chat-iframe');
                     if (iframe && iframe.src !== chatUrl) {
                         iframe.src = chatUrl;
+                        hideMessageList(iframe);
                         console.log('Set iframe source after login check error:', chatUrl);
                     }
                 }
@@ -74,6 +124,7 @@ export async function updateChatSource(chatOverlay) {
             const iframe = chatOverlay.querySelector('#yt-chat-iframe');
             if (iframe && iframe.src !== chatUrl) {
                 iframe.src = chatUrl;
+                hideMessageList(iframe);
                 console.log('Set iframe source after livestream check error:', chatUrl);
             }
         }
