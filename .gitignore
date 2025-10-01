@@ -1,1 +1,8 @@
 .env
+node_modules/
+dist/
+GEMINI.md
+QWEN.md
+practice.md
+rule.md
+TODO.md

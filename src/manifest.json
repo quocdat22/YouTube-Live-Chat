@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Live Chat Fullscreen",
+  "version": "1.0",
+  "description": "Display YouTube Live Chat in fullscreen mode",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://*.googleapis.com/*",
+    "*://www.youtube.com/live_chat*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*.png"],
+      "matches": ["*://*.youtube.com/*"]
+    }
+  ]
+}

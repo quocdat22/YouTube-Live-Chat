@@ -13,11 +13,13 @@ A Chrome extension that allows users to view and interact with YouTube Live Chat
 
 ## Installation
 
-1. Clone or download this repository
-2. Open Chrome and navigate to `chrome://extensions`
-3. Enable "Developer mode" in the top right corner
-4. Click "Load unpacked" and select the extension directory
-5. The extension will be installed and ready to use
+1. Clone or download this repository.
+2. Install dependencies by running `npm install` in the root directory.
+3. Build the extension by running `npm run build`.
+4. Open Chrome and navigate to `chrome://extensions`.
+5. Enable "Developer mode" in the top right corner.
+6. Click "Load unpacked" and select the `dist` directory.
+7. The extension will be installed and ready to use.
 
 ## Usage
 
@@ -64,10 +66,23 @@ The extension uses a content script that monitors the browser for fullscreen eve
 
 ## Development
 
+This project uses `webpack` to bundle the source files.
+
+1.  Install dependencies:
+    ```
+    npm install
+    ```
+2.  Build the extension:
+    ```
+    npm run build
+    ```
+    This will create a `dist` directory with the bundled extension.
+
 To modify the extension:
-1. Make changes to the source files
-2. Reload the extension in `chrome://extensions` by clicking the refresh icon
-3. Test the changes on YouTube
+
+1.  Make changes to the source files in the `src` directory.
+2.  Run `npm run build` to rebuild the extension.
+3.  Reload the extension in `chrome://extensions` by clicking the refresh icon.
 
 ## License
 
