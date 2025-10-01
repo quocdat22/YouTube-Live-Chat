@@ -13,7 +13,11 @@ export function loadSavedPosition() {
     savedPosition = JSON.parse(localStorage.getItem('ytChatPosition') || '{}');
   } catch (e) {
     console.error('Error parsing saved position:', e);
-    localStorage.removeItem('ytChatPosition');
+    try {
+      localStorage.removeItem('ytChatPosition');
+    } catch (removeError) {
+      console.error('Error removing corrupted ytChatPosition:', removeError);
+    }
   }
   return savedPosition;
 }
@@ -28,7 +32,11 @@ export function loadSavedSize() {
     savedSize = JSON.parse(localStorage.getItem('ytChatSize') || '{}');
   } catch (e) {
     console.error('Error parsing saved size:', e);
-    localStorage.removeItem('ytChatSize');
+    try {
+      localStorage.removeItem('ytChatSize');
+    } catch (removeError) {
+      console.error('Error removing corrupted ytChatSize:', removeError);
+    }
   }
   return savedSize;
 }
@@ -41,12 +49,28 @@ export function loadSavedSize() {
  * @returns {Object} Object with constrained left and top.
  */
 export function constrainPosition(left, top, overlay) {
-  const maxLeft = window.innerWidth - overlay.offsetWidth;
-  const maxTop = window.innerHeight - overlay.offsetHeight;
-  return {
-    left: Math.max(0, Math.min(left, maxLeft)),
-    top: Math.max(0, Math.min(top, maxTop)),
-  };
+  try {
+    // Validate inputs
+    if (typeof left !== 'number' || typeof top !== 'number') {
+      console.warn('Invalid position parameters:', { left, top });
+      return { left: 0, top: 0 };
+    }
+    
+    if (!overlay || !overlay.offsetWidth || !overlay.offsetHeight) {
+      console.warn('Invalid overlay element for position constraint');
+      return { left: 0, top: 0 };
+    }
+    
+    const maxLeft = window.innerWidth - overlay.offsetWidth;
+    const maxTop = window.innerHeight - overlay.offsetHeight;
+    return {
+      left: Math.max(0, Math.min(left, maxLeft)),
+      top: Math.max(0, Math.min(top, maxTop)),
+    };
+  } catch (error) {
+    console.error('Error in constrainPosition:', error);
+    return { left: 0, top: 0 };
+  }
 }
 
 /**
@@ -55,16 +79,25 @@ export function constrainPosition(left, top, overlay) {
  * @param {Object} savedPosition - The saved position object.
  */
 export function applySavedPosition(overlay, savedPosition) {
-  if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
-    const constrained = constrainPosition(
-      savedPosition.left,
-      savedPosition.top,
-      overlay
-    );
-    overlay.style.left = constrained.left + 'px';
-    overlay.style.top = constrained.top + 'px';
-    overlay.style.right = 'auto';
-    console.log('Applied saved position:', constrained);
+  try {
+    if (!overlay) {
+      console.warn('Overlay element is null or undefined');
+      return;
+    }
+    
+    if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
+      const constrained = constrainPosition(
+        savedPosition.left,
+        savedPosition.top,
+        overlay
+      );
+      overlay.style.left = constrained.left + 'px';
+      overlay.style.top = constrained.top + 'px';
+      overlay.style.right = 'auto';
+      console.log('Applied saved position:', constrained);
+    }
+  } catch (error) {
+    console.error('Error in applySavedPosition:', error);
   }
 }
 
@@ -74,8 +107,18 @@ export function applySavedPosition(overlay, savedPosition) {
  * @param {number} top - The top position.
  */
 export function savePosition(left, top) {
-  const position = { left, top };
-  localStorage.setItem('ytChatPosition', JSON.stringify(position));
+  try {
+    // Validate inputs
+    if (typeof left !== 'number' || typeof top !== 'number') {
+      console.warn('Invalid position parameters for saving:', { left, top });
+      return;
+    }
+    
+    const position = { left, top };
+    localStorage.setItem('ytChatPosition', JSON.stringify(position));
+  } catch (error) {
+    console.error('Error saving position to localStorage:', error);
+  }
 }
 
 /**
@@ -85,14 +128,25 @@ export function savePosition(left, top) {
  * @returns {Object} Object with constrained width and height.
  */
 export function constrainSize(width, height) {
-  const minWidth = 200;
-  const minHeight = 150;
-  const maxWidth = 800;
-  const maxHeight = 600;
-  return {
-    width: Math.max(minWidth, Math.min(width, maxWidth)),
-    height: Math.max(minHeight, Math.min(height, maxHeight)),
-  };
+  try {
+    // Validate inputs
+    if (typeof width !== 'number' || typeof height !== 'number') {
+      console.warn('Invalid size parameters:', { width, height });
+      return { width: 200, height: 150 };
+    }
+    
+    const minWidth = 200;
+    const minHeight = 150;
+    const maxWidth = 800;
+    const maxHeight = 600;
+    return {
+      width: Math.max(minWidth, Math.min(width, maxWidth)),
+      height: Math.max(minHeight, Math.min(height, maxHeight)),
+    };
+  } catch (error) {
+    console.error('Error in constrainSize:', error);
+    return { width: 200, height: 150 };
+  }
 }
 
 /**
@@ -101,11 +155,20 @@ export function constrainSize(width, height) {
  * @param {Object} savedSize - The saved size object.
  */
 export function applySavedSize(overlay, savedSize) {
-  if (savedSize.width !== undefined && savedSize.height !== undefined) {
-    const constrained = constrainSize(savedSize.width, savedSize.height);
-    overlay.style.width = constrained.width + 'px';
-    overlay.style.height = constrained.height + 'px';
-    console.log('Applied saved size:', constrained);
+  try {
+    if (!overlay) {
+      console.warn('Overlay element is null or undefined');
+      return;
+    }
+    
+    if (savedSize.width !== undefined && savedSize.height !== undefined) {
+      const constrained = constrainSize(savedSize.width, savedSize.height);
+      overlay.style.width = constrained.width + 'px';
+      overlay.style.height = constrained.height + 'px';
+      console.log('Applied saved size:', constrained);
+    }
+  } catch (error) {
+    console.error('Error in applySavedSize:', error);
   }
 }
 
@@ -115,6 +178,16 @@ export function applySavedSize(overlay, savedSize) {
  * @param {number} height - The height.
  */
 export function saveSize(width, height) {
-  const size = { width, height };
-  localStorage.setItem('ytChatSize', JSON.stringify(size));
+  try {
+    // Validate inputs
+    if (typeof width !== 'number' || typeof height !== 'number') {
+      console.warn('Invalid size parameters for saving:', { width, height });
+      return;
+    }
+    
+    const size = { width, height };
+    localStorage.setItem('ytChatSize', JSON.stringify(size));
+  } catch (error) {
+    console.error('Error saving size to localStorage:', error);
+  }
 }

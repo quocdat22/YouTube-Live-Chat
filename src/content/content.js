@@ -25,14 +25,14 @@ let chatOverlay = null;
 let fullscreenToggleTimeout = null;
 
 // Function to handle fullscreen change events
-function onFullscreenChange() {
+async function onFullscreenChange() {
   // Clear any existing timeout
   if (fullscreenToggleTimeout) {
     clearTimeout(fullscreenToggleTimeout);
   }
 
   // Use a small delay to handle rapid toggling
-  fullscreenToggleTimeout = setTimeout(() => {
+  fullscreenToggleTimeout = setTimeout(async () => {
     const newIsFullscreen = checkFullscreen();
     console.log(
       'Fullscreen handler: old state:',
@@ -55,10 +55,10 @@ function onFullscreenChange() {
             'On YouTube video page in fullscreen, showing chat... Video ID:',
             videoId
           );
-          chatOverlay = showChatOverlay();
+          chatOverlay = await showChatOverlay();
           console.log('Created chat overlay:', chatOverlay);
           if (chatOverlay) {
-            updateChatSource(chatOverlay);
+            await updateChatSource(chatOverlay);
           }
         } else {
           console.log(
@@ -96,9 +96,9 @@ document.addEventListener('MSFullscreenChange', () => {
 });
 
 // Initialize - check current fullscreen state on load
-window.addEventListener('load', function () {
+window.addEventListener('load', async function () {
   console.log('Page loaded, checking fullscreen status...');
-  setTimeout(() => {
+  setTimeout(async () => {
     isFullscreen = checkFullscreen();
     console.log('Current fullscreen status:', isFullscreen);
     console.log('Current URL:', window.location.href);
@@ -108,10 +108,10 @@ window.addEventListener('load', function () {
         'In fullscreen mode on YouTube, showing chat overlay... Video ID:',
         videoId
       );
-      chatOverlay = showChatOverlay();
+      chatOverlay = await showChatOverlay();
       console.log('Chat overlay created:', chatOverlay);
       if (chatOverlay) {
-        updateChatSource(chatOverlay);
+        await updateChatSource(chatOverlay);
       }
     } else {
       console.log(

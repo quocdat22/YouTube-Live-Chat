@@ -17,76 +17,175 @@ export function createOverlayElement() {
   chatOverlay.id = 'yt-fullscreen-chat-overlay';
   chatOverlay.setAttribute('role', 'dialog');
   chatOverlay.setAttribute('aria-labelledby', 'chat-title');
-  chatOverlay.innerHTML = `
-        <div id="chat-header" role="banner" aria-label="YouTube Live Chat Controls" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; height: 40px; box-sizing: border-box; cursor: move;">
-            <span id="chat-title" aria-label="YouTube Live Chat">YouTube Live Chat</span>
-            <div style="display: flex; gap: 5px;">
-                <button id="settings-btn" aria-label="Settings" style="background: none; border: none; cursor: pointer;"><img id="settings-icon" style="width: 16px; height: 16px;" /></button>
-                <button id="minimize-chat-btn" aria-label="Minimize chat" style="background: none; border: none; color: white; cursor: pointer; font-size: 16px;">−</button>
-                <button id="close-chat-btn" aria-label="Close chat" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">×</button>
-            </div>
-        </div>
-        <iframe
-            id="yt-chat-iframe"
-            src=""
-            style="width: 100%; height: calc(100% - 40px); border: none;"
-            allow="autoplay; encrypted-media"
-            sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation-by-user-activation">
-        </iframe>
-        <!-- Resize handles -->
-        <div class="resize-handle resize-handle-nw" style="position: absolute; top: 0; left: 0; width: 10px; height: 10px; cursor: nw-resize; background: none;"></div>
-        <div class="resize-handle resize-handle-ne" style="position: absolute; top: 0; right: 0; width: 10px; height: 10px; cursor: ne-resize; background: none;"></div>
-        <div class="resize-handle resize-handle-sw" style="position: absolute; bottom: 0; left: 0; width: 10px; height: 10px; cursor: sw-resize; background: none;"></div>
-        <div class="resize-handle resize-handle-se" style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; cursor: se-resize; background: none;"></div>
-        <div class="resize-handle resize-handle-n" style="position: absolute; top: 0; left: 10px; right: 10px; height: 5px; cursor: n-resize; background: none;"></div>
-        <div class="resize-handle resize-handle-s" style="position: absolute; bottom: 0; left: 10px; right: 10px; height: 5px; cursor: s-resize; background: none;"></div>
-        <div class="resize-handle resize-handle-w" style="position: absolute; top: 10px; left: 0; bottom: 10px; width: 5px; cursor: w-resize; background: none;"></div>
-        <div class="resize-handle resize-handle-e" style="position: absolute; top: 10px; right: 0; bottom: 10px; width: 5px; cursor: e-resize; background: none;"></div>
-        <!-- Settings Modal -->
-        <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2147483648; font-family: Arial, sans-serif;">
-            <div id="settings-modal-content" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); min-width: 250px;">
-                <h3 style="margin: 0 0 15px 0; font-size: 18px;">Settings</h3>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" id="show-history-checkbox" checked style="cursor: pointer;">
-                        <span>Show History</span>
-                    </label>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" id="show-chat-header-checkbox" checked style="cursor: pointer;">
-                        <span>Show Chat Header</span>
-                    </label>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" id="show-chat-banner-checkbox" checked style="cursor: pointer;">
-                        <span>Show Chat Banner</span>
-                    </label>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" id="hide-super-chat-buttons-checkbox" style="cursor: pointer;">
-                        <span>Hide Super Chat Buttons</span>
-                    </label>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="checkbox" id="show-chat-ticker-checkbox" checked style="cursor: pointer;">
-                        <span>Show Chat Ticker</span>
-                    </label>
-                </div>
 
-                <button id="close-settings-modal" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Close</button>
-            </div>
-        </div>
-     `;
+  // Create chat header
+  const chatHeader = document.createElement('div');
+  chatHeader.id = 'chat-header';
+  chatHeader.setAttribute('role', 'banner');
+  chatHeader.setAttribute('aria-label', 'YouTube Live Chat Controls');
+  chatHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 10px; height: 40px; box-sizing: border-box; cursor: move;';
 
-  // Set the settings icon source
-  const settingsIcon = chatOverlay.querySelector('#settings-icon');
-  if (settingsIcon) {
-    settingsIcon.src = chrome.runtime.getURL('icons/setting.png');
-  }
+  // Create title span
+  const chatTitle = document.createElement('span');
+  chatTitle.id = 'chat-title';
+  chatTitle.setAttribute('aria-label', 'YouTube Live Chat');
+  chatTitle.textContent = 'YouTube Live Chat';
+
+  // Create button container
+  const buttonContainer = document.createElement('div');
+  buttonContainer.style.cssText = 'display: flex; gap: 5px;';
+
+  // Create settings button
+  const settingsBtn = document.createElement('button');
+  settingsBtn.id = 'settings-btn';
+  settingsBtn.setAttribute('aria-label', 'Settings');
+  settingsBtn.style.cssText = 'background: none; border: none; cursor: pointer;';
+
+  // Create settings icon
+  const settingsIcon = document.createElement('img');
+  settingsIcon.id = 'settings-icon';
+  settingsIcon.style.cssText = 'width: 16px; height: 16px;';
+  settingsIcon.src = chrome.runtime.getURL('icons/setting.png');
+  settingsBtn.appendChild(settingsIcon);
+
+  // Create minimize button
+  const minimizeChatBtn = document.createElement('button');
+  minimizeChatBtn.id = 'minimize-chat-btn';
+  minimizeChatBtn.setAttribute('aria-label', 'Minimize chat');
+  minimizeChatBtn.style.cssText = 'background: none; border: none; color: white; cursor: pointer; font-size: 16px;';
+  minimizeChatBtn.textContent = '−';
+
+  // Create close button
+  const closeChatBtn = document.createElement('button');
+  closeChatBtn.id = 'close-chat-btn';
+  closeChatBtn.setAttribute('aria-label', 'Close chat');
+  closeChatBtn.style.cssText = 'background: none; border: none; color: white; cursor: pointer; font-size: 18px;';
+  closeChatBtn.textContent = '×';
+
+  // Add buttons to container
+  buttonContainer.appendChild(settingsBtn);
+  buttonContainer.appendChild(minimizeChatBtn);
+  buttonContainer.appendChild(closeChatBtn);
+
+  // Add elements to header
+  chatHeader.appendChild(chatTitle);
+  chatHeader.appendChild(buttonContainer);
+
+  // Create iframe
+  const iframe = document.createElement('iframe');
+  iframe.id = 'yt-chat-iframe';
+  iframe.src = '';
+  iframe.style.cssText = 'width: 100%; height: calc(100% - 40px); border: none;';
+  iframe.setAttribute('allow', 'autoplay; encrypted-media');
+  iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation-by-user-activation');
+
+  // Create resize handles
+  const resizeHandles = [];
+  
+  // Corner handles
+  const nwHandle = document.createElement('div');
+  nwHandle.className = 'resize-handle resize-handle-nw';
+  nwHandle.style.cssText = 'position: absolute; top: 0; left: 0; width: 10px; height: 10px; cursor: nw-resize; background: none;';
+  resizeHandles.push(nwHandle);
+  
+  const neHandle = document.createElement('div');
+  neHandle.className = 'resize-handle resize-handle-ne';
+  neHandle.style.cssText = 'position: absolute; top: 0; right: 0; width: 10px; height: 10px; cursor: ne-resize; background: none;';
+  resizeHandles.push(neHandle);
+  
+  const swHandle = document.createElement('div');
+  swHandle.className = 'resize-handle resize-handle-sw';
+  swHandle.style.cssText = 'position: absolute; bottom: 0; left: 0; width: 10px; height: 10px; cursor: sw-resize; background: none;';
+  resizeHandles.push(swHandle);
+  
+  const seHandle = document.createElement('div');
+  seHandle.className = 'resize-handle resize-handle-se';
+  seHandle.style.cssText = 'position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; cursor: se-resize; background: none;';
+  resizeHandles.push(seHandle);
+  
+  // Edge handles
+  const nHandle = document.createElement('div');
+  nHandle.className = 'resize-handle resize-handle-n';
+  nHandle.style.cssText = 'position: absolute; top: 0; left: 10px; right: 10px; height: 5px; cursor: n-resize; background: none;';
+  resizeHandles.push(nHandle);
+  
+  const sHandle = document.createElement('div');
+  sHandle.className = 'resize-handle resize-handle-s';
+  sHandle.style.cssText = 'position: absolute; bottom: 0; left: 10px; right: 10px; height: 5px; cursor: s-resize; background: none;';
+  resizeHandles.push(sHandle);
+  
+  const wHandle = document.createElement('div');
+  wHandle.className = 'resize-handle resize-handle-w';
+  wHandle.style.cssText = 'position: absolute; top: 10px; left: 0; bottom: 10px; width: 5px; cursor: w-resize; background: none;';
+  resizeHandles.push(wHandle);
+  
+  const eHandle = document.createElement('div');
+  eHandle.className = 'resize-handle resize-handle-e';
+  eHandle.style.cssText = 'position: absolute; top: 10px; right: 0; bottom: 10px; width: 5px; cursor: e-resize; background: none;';
+  resizeHandles.push(eHandle);
+
+  // Create settings modal
+  const settingsModal = document.createElement('div');
+  settingsModal.id = 'settings-modal';
+  settingsModal.style.cssText = 'display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2147483648; font-family: Arial, sans-serif;';
+
+  // Create settings modal content
+  const settingsModalContent = document.createElement('div');
+  settingsModalContent.id = 'settings-modal-content';
+  settingsModalContent.style.cssText = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); min-width: 250px;';
+
+  // Create settings title
+  const settingsTitle = document.createElement('h3');
+  settingsTitle.style.cssText = 'margin: 0 0 15px 0; font-size: 18px;';
+  settingsTitle.textContent = 'Settings';
+  settingsModalContent.appendChild(settingsTitle);
+
+  // Create settings options
+  const settingsOptions = [
+    { id: 'show-history-checkbox', label: 'Show History', checked: true },
+    { id: 'show-chat-header-checkbox', label: 'Show Chat Header', checked: true },
+    { id: 'show-chat-banner-checkbox', label: 'Show Chat Banner', checked: true },
+    { id: 'hide-super-chat-buttons-checkbox', label: 'Hide Super Chat Buttons', checked: false },
+    { id: 'show-chat-ticker-checkbox', label: 'Show Chat Ticker', checked: true }
+  ];
+
+  settingsOptions.forEach(option => {
+    const optionDiv = document.createElement('div');
+    optionDiv.style.cssText = 'margin-bottom: 15px;';
+    
+    const label = document.createElement('label');
+    label.style.cssText = 'display: flex; align-items: center; gap: 10px; cursor: pointer;';
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = option.id;
+    checkbox.checked = option.checked;
+    checkbox.style.cssText = 'cursor: pointer;';
+    
+    const span = document.createElement('span');
+    span.textContent = option.label;
+    
+    label.appendChild(checkbox);
+    label.appendChild(span);
+    optionDiv.appendChild(label);
+    settingsModalContent.appendChild(optionDiv);
+  });
+
+  // Create close modal button
+  const closeSettingsModalBtn = document.createElement('button');
+  closeSettingsModalBtn.id = 'close-settings-modal';
+  closeSettingsModalBtn.style.cssText = 'background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer;';
+  closeSettingsModalBtn.textContent = 'Close';
+  settingsModalContent.appendChild(closeSettingsModalBtn);
+
+  // Add all elements to settings modal
+  settingsModal.appendChild(settingsModalContent);
+
+  // Add all elements to chat overlay
+  chatOverlay.appendChild(chatHeader);
+  chatOverlay.appendChild(iframe);
+  resizeHandles.forEach(handle => chatOverlay.appendChild(handle));
+  chatOverlay.appendChild(settingsModal);
 
   // Position the overlay with responsive dimensions
   chatOverlay.style.position = 'fixed';
