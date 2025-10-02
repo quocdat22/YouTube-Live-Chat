@@ -3,28 +3,26 @@
   <head>
     <meta charset="utf-8" />
     <title>YouTube Live Chat</title>
-    <link rel="stylesheet" href="popup.css" />
+    <link rel="stylesheet" href="popup-tailwind.css" />
   </head>
-  <body>
-    <div id="chat-container">
-      <div id="chat-header">
-        <h3>Live Chat</h3>
-        <button id="close-btn">X</button>
-      </div>
-      <div id="messages-container">
-        <div id="messages-list">
-          <!-- Messages will be loaded here -->
-        </div>
-      </div>
-      <div id="input-container">
-        <input
-          type="text"
-          id="message-input"
-          placeholder="Type your message..."
-        />
-        <button id="send-btn">Send</button>
+  <body class="bg-gray-900 min-w-[300px]">
+    <div class="flex justify-between items-center p-3 bg-gray-800 border-b border-gray-700">
+      <span class="text-white font-medium text-sm">YouTube Live Chat Fullscreen</span>
+      <span class="text-white font-medium text-sm">Version 1.0</span>
+    </div>
+    <div class="flex justify-between items-center p-3 bg-gray-800 border-b border-gray-700">
+      <span class="text-white font-medium text-sm">Auto-show on fullscreen</span>
+      <div class="toggle-switch">
+        <input type="checkbox" id="auto-show-toggle" />
+        <span class="toggle-slider round"></span>
       </div>
     </div>
-    <script src="popup.js"></script>
+    
+<div class="about-section p-3 border-t border-gray-700">
+  <div class="text-center text-gray-400 text-xs space-y-1">
+    <a href="../../README.md" class="block text-youtube-red hover:text-red-400 underline" target="_blank">Help & Support</a>
+  </div>
+</div>
+    <script src="../popup.js"></script>
   </body>
 </html>

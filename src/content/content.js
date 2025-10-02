@@ -48,23 +48,35 @@ async function onFullscreenChange() {
       console.log('Fullscreen state changed to:', newIsFullscreen);
 
       if (newIsFullscreen) {
-        // Check if we're on a YouTube video page
-        const videoId = getYouTubeVideoId(window.location.href);
-        if (videoId) {
-          console.log(
-            'On YouTube video page in fullscreen, showing chat... Video ID:',
-            videoId
-          );
-          chatOverlay = await showChatOverlay();
-          console.log('Created chat overlay:', chatOverlay);
-          if (chatOverlay) {
-            await updateChatSource(chatOverlay);
+        try {
+          console.log('Fullscreen entered, checking auto-show setting...');
+          const result = await chrome.storage.local.get(['autoShowOnFullscreen']);
+          console.log('Storage result for autoShowOnFullscreen:', result.autoShowOnFullscreen, 'Type:', typeof result.autoShowOnFullscreen);
+          // Only show if the setting is explicitly true
+          if (result.autoShowOnFullscreen === true) {
+            const videoId = getYouTubeVideoId(window.location.href);
+            console.log('Video ID detected:', videoId, 'Current URL:', window.location.href);
+            if (videoId) {
+              console.log(
+                'On YouTube video page in fullscreen, showing chat... Video ID:',
+                videoId
+              );
+              chatOverlay = await showChatOverlay();
+              console.log('Created chat overlay:', chatOverlay);
+              if (chatOverlay) {
+                await updateChatSource(chatOverlay);
+              }
+            } else {
+              console.log(
+                'Not on YouTube video page, not showing chat. URL:',
+                window.location.href
+              );
+            }
+          } else {
+            console.log('Auto-show is disabled (value:', result.autoShowOnFullscreen, '), not showing chat overlay.');
           }
-        } else {
-          console.log(
-            'Not on YouTube video page, not showing chat. URL:',
-            window.location.href
-          );
+        } catch (error) {
+          console.error('Error handling fullscreen change:', error);
         }
       } else {
         console.log('Exited fullscreen, hiding chat...');
