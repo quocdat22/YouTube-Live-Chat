@@ -10,7 +10,7 @@ module.exports = {
     content: './src/content/content.js',
     popup: './src/popup/popup.js',
     background: './src/background/background.js',
-    'popup/popup-tailwind': './src/popup/popup-tailwind.css',
+    'popup/popup': './src/popup/popup.css',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),

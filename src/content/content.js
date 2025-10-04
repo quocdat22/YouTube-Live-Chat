@@ -50,10 +50,10 @@ async function onFullscreenChange() {
       if (newIsFullscreen) {
         try {
           console.log('Fullscreen entered, checking auto-show setting...');
-          const result = await chrome.storage.local.get(['autoShowOnFullscreen']);
-          console.log('Storage result for autoShowOnFullscreen:', result.autoShowOnFullscreen, 'Type:', typeof result.autoShowOnFullscreen);
+          const result = await chrome.storage.local.get(['autoShowFullscreen']);
+          console.log('Storage result for autoShowFullscreen:', result.autoShowFullscreen, 'Type:', typeof result.autoShowFullscreen);
           // Only show if the setting is explicitly true
-          if (result.autoShowOnFullscreen === true) {
+          if (result.autoShowFullscreen === true) {
             const videoId = getYouTubeVideoId(window.location.href);
             console.log('Video ID detected:', videoId, 'Current URL:', window.location.href);
             if (videoId) {
@@ -73,7 +73,7 @@ async function onFullscreenChange() {
               );
             }
           } else {
-            console.log('Auto-show is disabled (value:', result.autoShowOnFullscreen, '), not showing chat overlay.');
+            console.log('Auto-show is disabled (value:', result.autoShowFullscreen, '), not showing chat overlay.');
           }
         } catch (error) {
           console.error('Error handling fullscreen change:', error);
@@ -116,14 +116,21 @@ window.addEventListener('load', async function () {
     console.log('Current URL:', window.location.href);
     const videoId = getYouTubeVideoId(window.location.href);
     if (isFullscreen && videoId) {
-      console.log(
-        'In fullscreen mode on YouTube, showing chat overlay... Video ID:',
-        videoId
-      );
-      chatOverlay = await showChatOverlay();
-      console.log('Chat overlay created:', chatOverlay);
-      if (chatOverlay) {
-        await updateChatSource(chatOverlay);
+      console.log('In fullscreen mode on YouTube, checking auto-show setting...');
+      const result = await chrome.storage.local.get(['autoShowFullscreen']);
+      console.log('Storage result for autoShowFullscreen:', result.autoShowFullscreen, 'Type:', typeof result.autoShowFullscreen);
+      if (result.autoShowFullscreen === true) {
+        console.log(
+          'Auto-show enabled, showing chat overlay... Video ID:',
+          videoId
+        );
+        chatOverlay = await showChatOverlay();
+        console.log('Chat overlay created:', chatOverlay);
+        if (chatOverlay) {
+          await updateChatSource(chatOverlay);
+        }
+      } else {
+        console.log('Auto-show is disabled (value:', result.autoShowFullscreen, '), not showing chat overlay.');
       }
     } else {
       console.log(
@@ -137,6 +144,20 @@ window.addEventListener('load', async function () {
 });
 
 startObserving(isFullscreen, chatOverlay, hideChatOverlay, updateChatSource);
+
+// Listen for messages from popup/background
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('[Content] Received message:', message);
+
+  if (message.action === 'updateSettings' && message.settings) {
+    console.log('[Content] Settings updated:', message.settings);
+    // Settings are stored in chrome.storage, so no need to update local vars
+    // The next fullscreen change will read the updated settings
+    sendResponse({ success: true });
+  }
+
+  return true; // Keep the message channel open for async response
+});
 
 // Adjust the chat overlay size and position when window resizes
 window.addEventListener(
