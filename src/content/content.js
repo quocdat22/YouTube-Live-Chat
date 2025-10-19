@@ -8,7 +8,7 @@ import {
   updateChatSource,
 } from './modules/chatOverlay.js';
 import { checkFullscreen } from './modules/fullscreenHandler.js';
-import { getYouTubeVideoId } from 'utils/youtubeUtils.js';
+import { getYouTubeVideoId, isLivestream } from 'utils/youtubeUtils.js';
 import { throttle } from 'utils/throttle.js';
 import { adjustOverlayForWindowResize } from './modules/overlayResize.js';
 import { startObserving, stopObserving } from './modules/pageObserver.js';
@@ -55,10 +55,11 @@ async function onFullscreenChange() {
           // Only show if the setting is explicitly true
           if (result.autoShowFullscreen === true) {
             const videoId = getYouTubeVideoId(window.location.href);
-            console.log('Video ID detected:', videoId, 'Current URL:', window.location.href);
-            if (videoId) {
+            const isLive = isLivestream();
+            console.log('Video ID detected:', videoId, 'Is livestream:', isLive, 'Current URL:', window.location.href);
+            if (videoId && isLive) {
               console.log(
-                'On YouTube video page in fullscreen, showing chat... Video ID:',
+                'On YouTube livestream page in fullscreen, showing chat... Video ID:',
                 videoId
               );
               chatOverlay = await showChatOverlay();
@@ -68,8 +69,12 @@ async function onFullscreenChange() {
               }
             } else {
               console.log(
-                'Not on YouTube video page, not showing chat. URL:',
-                window.location.href
+                'Not on YouTube livestream page or not in fullscreen, not showing chat. URL:',
+                window.location.href,
+                'Video ID:',
+                videoId,
+                'Is livestream:',
+                isLive
               );
             }
           } else {
@@ -115,8 +120,9 @@ window.addEventListener('load', async function () {
     console.log('Current fullscreen status:', isFullscreen);
     console.log('Current URL:', window.location.href);
     const videoId = getYouTubeVideoId(window.location.href);
-    if (isFullscreen && videoId) {
-      console.log('In fullscreen mode on YouTube, checking auto-show setting...');
+    const isLive = isLivestream();
+    if (isFullscreen && videoId && isLive) {
+      console.log('In fullscreen mode on YouTube livestream, checking auto-show setting...');
       const result = await chrome.storage.local.get(['autoShowFullscreen']);
       console.log('Storage result for autoShowFullscreen:', result.autoShowFullscreen, 'Type:', typeof result.autoShowFullscreen);
       if (result.autoShowFullscreen === true) {
@@ -134,10 +140,12 @@ window.addEventListener('load', async function () {
       }
     } else {
       console.log(
-        'Not in fullscreen or not on YouTube, skipping chat overlay. Video ID:',
+        'Not in fullscreen or not on YouTube livestream, skipping chat overlay. Video ID:',
         videoId,
         'Fullscreen:',
-        isFullscreen
+        isFullscreen,
+        'Is livestream:',
+        isLive
       );
     }
   }, 1000); // Slight delay to ensure page is loaded
