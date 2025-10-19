@@ -9,6 +9,9 @@ import {
   constrainPosition,
   applySavedPosition,
   savePosition,
+  saveFinalPosition,
+  loadSavedSize,
+  applySavedSize,
 } from './overlayPositioning.js';
 import { setupControls } from './overlayControls.js';
 import { setupDragging } from './overlayDrag.js';
@@ -28,6 +31,21 @@ export async function showChatOverlay() {
     const existingOverlay = document.getElementById('yt-fullscreen-chat-overlay');
     if (existingOverlay) {
       console.log('Chat overlay already exists, showing it');
+
+      // Load and apply saved position for existing overlay
+      try {
+        const savedPosition = loadSavedPosition();
+        if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
+          applySavedPosition(existingOverlay, savedPosition);
+        }
+        const savedSize = loadSavedSize();
+        if (savedSize.width !== undefined && savedSize.height !== undefined) {
+          applySavedSize(existingOverlay, savedSize);
+        }
+      } catch (error) {
+        console.error('Error loading saved position/size for existing overlay:', error);
+      }
+
       existingOverlay.style.display = 'block';
       return existingOverlay;
     }
@@ -39,22 +57,26 @@ export async function showChatOverlay() {
       return null;
     }
 
-    // Load and apply saved position
-    try {
-      const savedPosition = loadSavedPosition();
-      if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
-        applySavedPosition(chatOverlay, savedPosition);
-      }
-    } catch (error) {
-      console.error('Error loading or applying saved position:', error);
-    }
-
-    // Add the overlay to the page
+    // Add the overlay to the page FIRST
     if (document.body) {
       document.body.appendChild(chatOverlay);
     } else {
       console.error('Document body not available');
       return null;
+    }
+
+    // Load and apply saved position AFTER adding to DOM
+    try {
+      const savedPosition = loadSavedPosition();
+      if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
+        applySavedPosition(chatOverlay, savedPosition);
+      }
+      const savedSize = loadSavedSize();
+      if (savedSize.width !== undefined && savedSize.height !== undefined) {
+        applySavedSize(chatOverlay, savedSize);
+      }
+    } catch (error) {
+      console.error('Error loading or applying saved position/size:', error);
     }
 
     // Set up controls (buttons)
@@ -105,9 +127,20 @@ export function hideChatOverlay() {
     console.log('hideChatOverlay function called (ID-based)');
     const chatOverlay = document.getElementById('yt-fullscreen-chat-overlay');
     if (chatOverlay) {
-      console.log('Found chat overlay element, removing it');
-      // Instead of just hiding, properly remove the element to free resources
-      chatOverlay.remove();
+      console.log('Found chat overlay element, saving final position before removing');
+
+      // Save final position and size before removing
+      saveFinalPosition(chatOverlay);
+
+      // Small delay to ensure save completes before removal
+      setTimeout(() => {
+        try {
+          chatOverlay.remove();
+          console.log('Chat overlay removed successfully');
+        } catch (removeError) {
+          console.error('Error removing chat overlay:', removeError);
+        }
+      }, 50);
     } else {
       console.log('No chat overlay found to hide');
     }

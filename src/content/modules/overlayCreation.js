@@ -5,7 +5,7 @@ import DOMPurify from 'dompurify';
  * Handles the creation of the chat overlay HTML structure and initial styling.
  */
 
-import { loadSavedSize, applySavedSize } from './overlayPositioning.js';
+import { loadSavedSize, applySavedSize, loadSavedPosition, applySavedPosition } from './overlayPositioning.js';
 
 /**
  * Creates the chat overlay element with initial structure and styles.
@@ -239,10 +239,16 @@ export function createOverlayElement() {
   chatOverlay.style.fontFamily = 'Arial, sans-serif';
   chatOverlay.style.color = 'white';
 
-  // Set initial position
-  const initialLeft = window.innerWidth - initialWidth - 10;
-  chatOverlay.style.left = initialLeft + 'px';
-  chatOverlay.style.top = '10%';
+  // Load and apply saved position first
+  const savedPosition = loadSavedPosition();
+  if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
+    applySavedPosition(chatOverlay, savedPosition);
+  } else {
+    // Set default position only if no saved position exists
+    const initialLeft = window.innerWidth - initialWidth - 10;
+    chatOverlay.style.left = initialLeft + 'px';
+    chatOverlay.style.top = '10%';
+  }
 
   // Load and apply saved size
   const savedSize = loadSavedSize();

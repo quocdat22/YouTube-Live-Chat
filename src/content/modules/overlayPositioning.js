@@ -10,13 +10,37 @@
 export function loadSavedPosition() {
   let savedPosition = {};
   try {
-    savedPosition = JSON.parse(localStorage.getItem('ytChatPosition') || '{}');
+    // Try new key first
+    let stored = localStorage.getItem('youtube_chat_position');
+    if (!stored) {
+      // Fallback to old key for migration
+      stored = localStorage.getItem('ytChatPosition');
+      if (stored) {
+        // Migrate old data to new key
+        localStorage.setItem('youtube_chat_position', stored);
+        localStorage.removeItem('ytChatPosition');
+      }
+    }
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      console.log('Loaded position from localStorage:', parsed);
+      // Convert from {x, y} to {left, top}
+      if (parsed.x !== undefined && parsed.y !== undefined) {
+        savedPosition = { left: parsed.x, top: parsed.y };
+      } else if (parsed.left !== undefined && parsed.top !== undefined) {
+        // Handle old format if migration didn't work
+        savedPosition = { left: parsed.left, top: parsed.top };
+      }
+    } else {
+      console.log('No saved position found in localStorage');
+    }
   } catch (e) {
     console.error('Error parsing saved position:', e);
     try {
+      localStorage.removeItem('youtube_chat_position');
       localStorage.removeItem('ytChatPosition');
     } catch (removeError) {
-      console.error('Error removing corrupted ytChatPosition:', removeError);
+      console.error('Error removing corrupted position data:', removeError);
     }
   }
   return savedPosition;
@@ -113,9 +137,11 @@ export function savePosition(left, top) {
       console.warn('Invalid position parameters for saving:', { left, top });
       return;
     }
-    
-    const position = { left, top };
-    localStorage.setItem('ytChatPosition', JSON.stringify(position));
+
+    // Save as {x, y} format as requested
+    const position = { x: left, y: top };
+    localStorage.setItem('youtube_chat_position', JSON.stringify(position));
+    console.log('Saved position to localStorage:', position);
   } catch (error) {
     console.error('Error saving position to localStorage:', error);
   }
@@ -184,10 +210,73 @@ export function saveSize(width, height) {
       console.warn('Invalid size parameters for saving:', { width, height });
       return;
     }
-    
+
     const size = { width, height };
     localStorage.setItem('ytChatSize', JSON.stringify(size));
+    console.log('Saved size to localStorage:', size);
   } catch (error) {
     console.error('Error saving size to localStorage:', error);
+  }
+}
+
+/**
+ * Saves the final position before overlay is hidden or removed.
+ * @param {HTMLElement} overlay - The overlay element.
+ */
+export function saveFinalPosition(overlay) {
+  try {
+    if (!overlay) {
+      console.warn('Overlay element is null or undefined in saveFinalPosition');
+      return;
+    }
+    const left = overlay.offsetLeft;
+    const top = overlay.offsetTop;
+    const position = { x: left, y: top };
+    localStorage.setItem('youtube_chat_position', JSON.stringify(position));
+    console.log('Final position saved before hiding:', position);
+  } catch (error) {
+    console.error('Error saving final position:', error);
+  }
+}
+
+/**
+ * Verifies that position data exists and is valid in localStorage.
+ * @returns {boolean} True if valid position data exists, false otherwise.
+ */
+export function verifyPositionSaved() {
+  try {
+    const stored = localStorage.getItem('youtube_chat_position');
+    if (stored) {
+      const pos = JSON.parse(stored);
+      const isValid = pos && typeof pos.x === 'number' && typeof pos.y === 'number';
+      console.log('Position verification result:', isValid, 'Data:', pos);
+      return isValid;
+    }
+    console.log('No position data found in localStorage');
+    return false;
+  } catch (error) {
+    console.error('Error verifying position:', error);
+    return false;
+  }
+}
+
+/**
+ * Verifies that size data exists and is valid in localStorage.
+ * @returns {boolean} True if valid size data exists, false otherwise.
+ */
+export function verifySizeSaved() {
+  try {
+    const stored = localStorage.getItem('ytChatSize');
+    if (stored) {
+      const size = JSON.parse(stored);
+      const isValid = size && typeof size.width === 'number' && typeof size.height === 'number';
+      console.log('Size verification result:', isValid, 'Data:', size);
+      return isValid;
+    }
+    console.log('No size data found in localStorage');
+    return false;
+  } catch (error) {
+    console.error('Error verifying size:', error);
+    return false;
   }
 }

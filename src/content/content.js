@@ -12,6 +12,7 @@ import { getYouTubeVideoId, isLivestream } from 'utils/youtubeUtils.js';
 import { throttle } from 'utils/throttle.js';
 import { adjustOverlayForWindowResize } from './modules/overlayResize.js';
 import { startObserving, stopObserving } from './modules/pageObserver.js';
+import { verifyPositionSaved, verifySizeSaved } from './modules/overlayPositioning.js';
 
 console.log('Content script loaded');
 
@@ -66,6 +67,13 @@ async function onFullscreenChange() {
               console.log('Created chat overlay:', chatOverlay);
               if (chatOverlay) {
                 await updateChatSource(chatOverlay);
+     
+                // Verify position/size was loaded correctly
+                setTimeout(() => {
+                  const positionSaved = verifyPositionSaved();
+                  const sizeSaved = verifySizeSaved();
+                  console.log('Storage verification after showing overlay - Position:', positionSaved, 'Size:', sizeSaved);
+                }, 100);
               }
             } else {
               console.log(
@@ -87,6 +95,13 @@ async function onFullscreenChange() {
         console.log('Exited fullscreen, hiding chat...');
         hideChatOverlay();
         chatOverlay = null;
+
+        // Verify position was saved after hiding
+        setTimeout(() => {
+          const positionSaved = verifyPositionSaved();
+          const sizeSaved = verifySizeSaved();
+          console.log('Storage verification after fullscreen exit - Position:', positionSaved, 'Size:', sizeSaved);
+        }, 100);
       }
     } else {
       console.log('Fullscreen state unchanged, no action needed');
@@ -134,6 +149,13 @@ window.addEventListener('load', async function () {
         console.log('Chat overlay created:', chatOverlay);
         if (chatOverlay) {
           await updateChatSource(chatOverlay);
+
+          // Verify position/size was loaded correctly
+          setTimeout(() => {
+            const positionSaved = verifyPositionSaved();
+            const sizeSaved = verifySizeSaved();
+            console.log('Storage verification after initial overlay creation - Position:', positionSaved, 'Size:', sizeSaved);
+          }, 100);
         }
       } else {
         console.log('Auto-show is disabled (value:', result.autoShowFullscreen, '), not showing chat overlay.');
