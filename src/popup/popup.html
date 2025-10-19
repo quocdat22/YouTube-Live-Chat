@@ -1,101 +1,144 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>YouTube Live Chat Fullscreen</title>
-  <link rel="stylesheet" href="popup.css">
-</head>
-<body class="bg-gray-900 text-white m-0 p-0">
-  <div id="popup-container" class="p-4 bg-gray-900 flex flex-col">
-    
-    <!-- Header -->
-    <header id="popup-header" class="flex justify-between items-center mb-4 pb-2 border-b border-gray-700">
-      <div class="flex items-center">
-        <h1 class="m-0 text-sm font-medium truncate mr-2">YouTube Live Chat Fullscreen</h1>
-      </div>
-      <span id="version" class="text-xs text-gray-400 bg-red-900/20 px-2 py-0.5 rounded-full min-w-[40px] text-center">v1.0</span>
-    </header>
-
-    <!-- General Settings -->
-    <section id="general-settings" class="mb-4">
-      <h2 class="mt-0 mb-3 text-sm font-semibold">General</h2>
-      <div class="settings-content flex flex-col gap-2">
-        <div class="setting-item-enhanced">
-          <div class="setting-info">
-            <span class="setting-label">Auto-show in fullscreen</span>
-            <span class="setting-description">Automatically display chat when entering fullscreen</span>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="auto-show-fullscreen" checked>
-            <span class="slider"></span>
-          </label>
+  <head>
+    <meta charset="utf-8" />
+    <title>YouTube Live Chat Fullscreen</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body class="bg-main text-main m-0 p-0">
+    <div id="popup-container" class="p-4 bg-main flex flex-col">
+      <!-- Header -->
+      <header
+        id="popup-header"
+        class="flex justify-between items-center mb-4 pb-2 border-b border-main"
+      >
+        <div class="flex items-center">
+          <h1 class="m-0 text-sm font-medium truncate mr-2">
+            YouTube Live Chat Fullscreen
+          </h1>
         </div>
-      </div>
-    </section>
+        <span
+          id="version"
+          class="text-xs text-secondary bg-version px-2 py-0.5 rounded-full min-w-[40px] text-center"
+          >v1.0</span
+        >
+      </header>
 
-    <!-- Settings Sections -->
-    <div id="settings-container" class="flex-1 flex flex-col mb-4">
-      
-      <!-- Chat Box Settings -->
-      <details class="settings-section border border-gray-700 rounded mb-3 bg-gray-800 overflow-hidden">
-        <summary class="p-2.5 font-semibold cursor-pointer bg-black/20 outline-none relative pr-8">
-          Chat Box Settings
-          <span class="chevron absolute right-3 top-1/2 -translate-y-1/2 text-sm transition-transform">▼</span>
-        </summary>
-        <div class="p-3 settings-content flex flex-col gap-2">
-          <label class="setting-item flex items-center justify-between">
-            <span>Show chat history</span>
-            <input type="checkbox" id="show-history" class="ml-auto" checked>
-          </label>
-          <label class="setting-item flex items-center justify-between">
-            <span>Show chat header</span>
-            <input type="checkbox" id="show-chat-header" class="ml-auto" checked>
-          </label>
-          <label class="setting-item flex items-center justify-between">
-            <span>Show chat banner</span>
-            <input type="checkbox" id="show-chat-banner" class="ml-auto" checked>
-          </label>
-          <label class="setting-item flex items-center justify-between">
-            <span>Hide Super Chat buttons</span>
-            <input type="checkbox" id="hide-super-chat-buttons" class="ml-auto">
-          </label>
-          <label class="setting-item flex items-center justify-between">
-            <span>Show chat ticker</span>
-            <input type="checkbox" id="show-chat-ticker" class="ml-auto" checked>
-          </label>
-        </div>
-      </details>
-
-      <!-- Language Selection -->
-      <section id="language-settings" class="mb-4">
-        <h2 class="mt-0 mb-3 text-sm font-semibold">Language</h2>
+      <!-- General Settings -->
+      <section id="general-settings" class="mb-4">
+        <h2 class="mt-0 mb-3 text-sm font-semibold">General</h2>
         <div class="settings-content flex flex-col gap-2">
-          <div class="setting-item flex items-center justify-between">
-            <label for="chat-language">Chat Box Language</label>
-            <select id="chat-language" class="ml-auto p-1 bg-gray-900 border border-gray-700 rounded text-xs min-w-[120px] text-white">
-              <option value="en" selected>English</option>
-              <option value="es">Spanish</option>
-              <option value="fr">French</option>
-              <option value="de">German</option>
-              <option value="it">Italian</option>
-              <option value="pt">Portuguese</option>
-              <option value="ru">Russian</option>
-              <option value="ja">Japanese</option>
-              <option value="ko">Korean</option>
-              <option value="zh">Chinese</option>
-            </select>
+          <div class="setting-item-enhanced">
+            <div class="setting-info">
+              <span class="setting-label">Auto-show in fullscreen</span>
+              <span class="setting-description"
+                >Automatically display chat when entering fullscreen</span
+              >
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="auto-show-fullscreen" checked />
+              <span class="slider"></span>
+            </label>
           </div>
         </div>
       </section>
+
+      <!-- Settings Sections -->
+      <div id="settings-container" class="flex-1 flex flex-col mb-4">
+        <!-- Chat Box Settings -->
+        <details
+          class="settings-section border border-main rounded mb-3 bg-secondary overflow-hidden"
+        >
+          <summary
+            class="p-2.5 font-semibold cursor-pointer bg-highlight outline-none relative pr-8"
+          >
+            Chat Box Settings
+            <span
+              class="chevron absolute right-3 top-1/2 -translate-y-1/2 text-sm transition-transform"
+              >▼</span
+            >
+          </summary>
+          <div class="p-3 settings-content flex flex-col gap-2">
+            <label class="setting-item flex items-center justify-between">
+              <span>Show chat history</span>
+              <input
+                type="checkbox"
+                id="show-history"
+                class="ml-auto"
+                checked
+              />
+            </label>
+            <label class="setting-item flex items-center justify-between">
+              <span>Show chat header</span>
+              <input
+                type="checkbox"
+                id="show-chat-header"
+                class="ml-auto"
+                checked
+              />
+            </label>
+            <label class="setting-item flex items-center justify-between">
+              <span>Show chat banner</span>
+              <input
+                type="checkbox"
+                id="show-chat-banner"
+                class="ml-auto"
+                checked
+              />
+            </label>
+            <label class="setting-item flex items-center justify-between">
+              <span>Hide Super Chat buttons</span>
+              <input
+                type="checkbox"
+                id="hide-super-chat-buttons"
+                class="ml-auto"
+              />
+            </label>
+            <label class="setting-item flex items-center justify-between">
+              <span>Show chat ticker</span>
+              <input
+                type="checkbox"
+                id="show-chat-ticker"
+                class="ml-auto"
+                checked
+              />
+            </label>
+          </div>
+        </details>
+
+        <!-- Language Selection -->
+        <section id="language-settings" class="mb-4">
+          <h2 class="mt-0 mb-3 text-sm font-semibold">Language</h2>
+          <div class="settings-content flex flex-col gap-2">
+            <div class="setting-item flex items-center justify-between">
+              <label for="chat-language">Chat Box Language</label>
+              <select
+                id="chat-language"
+                class="ml-auto p-1 bg-main border border-main rounded text-xs min-w-[120px] text-main"
+              >
+                <option value="en" selected>English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+                <option value="pt">Portuguese</option>
+                <option value="ru">Russian</option>
+                <option value="ja">Japanese</option>
+                <option value="ko">Korean</option>
+                <option value="zh">Chinese</option>
+              </select>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Save Indicator -->
+      <div id="save-indicator" class="save-indicator">
+        <span class="save-icon">✓</span>
+        <span class="save-text">Settings saved</span>
+      </div>
     </div>
 
-    <!-- Save Indicator -->
-    <div id="save-indicator" class="save-indicator">
-      <span class="save-icon">✓</span>
-      <span class="save-text">Settings saved</span>
-    </div>
-  </div>
-
-  <script type="module" src="../popup.js"></script>
-</body>
+    <script type="module" src="../popup.js"></script>
+  </body>
 </html>

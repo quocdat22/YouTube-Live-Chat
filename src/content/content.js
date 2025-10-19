@@ -146,13 +146,46 @@ window.addEventListener('load', async function () {
 startObserving(isFullscreen, chatOverlay, hideChatOverlay, updateChatSource);
 
 // Listen for messages from popup/background
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   console.log('[Content] Received message:', message);
 
   if (message.action === 'updateSettings' && message.settings) {
     console.log('[Content] Settings updated:', message.settings);
-    // Settings are stored in chrome.storage, so no need to update local vars
-    // The next fullscreen change will read the updated settings
+
+    // If overlay exists, update it with new settings
+    if (chatOverlay) {
+      try {
+        // Update checkboxes in modal
+        for (const [key, value] of Object.entries(message.settings)) {
+          const checkboxId = key.replace(/([A-Z])/g, '-$1').toLowerCase() + '-checkbox';
+          const checkbox = chatOverlay.querySelector(`#${checkboxId}`);
+          if (checkbox) {
+            checkbox.checked = value;
+          }
+        }
+
+        // Apply settings to iframe if accessible
+        const iframe = chatOverlay.querySelector('#yt-chat-iframe');
+        if (iframe && iframe.contentDocument) {
+          const { applyHistoryState } = await import('./modules/utils.js');
+          applyHistoryState(iframe.contentDocument);
+        }
+
+        // Handle showHistory height adjustment
+        if (message.settings.showHistory !== undefined) {
+          if (message.settings.showHistory) {
+            chatOverlay.style.height = window.innerWidth < 800 ? '50%' : '70%';
+          } else {
+            chatOverlay.style.height = '285px';
+          }
+        }
+
+        console.log('[Content] Overlay updated with new settings');
+      } catch (error) {
+        console.error('[Content] Error updating overlay:', error);
+      }
+    }
+
     sendResponse({ success: true });
   }
 

@@ -181,9 +181,48 @@ export function createOverlayElement() {
   // Add all elements to settings modal
   settingsModal.appendChild(settingsModalContent);
 
+  // Create loading spinner
+  const loadingSpinner = document.createElement('div');
+  loadingSpinner.id = 'loading-spinner';
+  loadingSpinner.style.cssText = `
+    position: absolute;
+    top: 40px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 40px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10;
+  `;
+
+  const spinnerInner = document.createElement('div');
+  spinnerInner.style.cssText = `
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  `;
+
+  loadingSpinner.appendChild(spinnerInner);
+
+  // Add keyframe animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+  document.head.appendChild(style);
+
   // Add all elements to chat overlay
   chatOverlay.appendChild(chatHeader);
   chatOverlay.appendChild(iframe);
+  chatOverlay.appendChild(loadingSpinner);
   resizeHandles.forEach(handle => chatOverlay.appendChild(handle));
   chatOverlay.appendChild(settingsModal);
 

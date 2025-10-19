@@ -5,23 +5,33 @@
 
 import {
   getYouTubeVideoId,
-  checkIfUserLoggedIn,
   checkIfLiveStream,
 } from 'utils/youtubeUtils.js';
-import { applyHistoryState } from './utils.js';
 
 /**
- * Hides the message list in the chat iframe to show only header and input.
+ * Applies settings to the chat iframe on load.
  * @param {HTMLIFrameElement} iframe - The chat iframe element.
+ * @param {HTMLElement} chatOverlay - The chat overlay element.
  */
-function hideMessageList(iframe) {
-  iframe.onload = () => {
-    // Note: Due to cross-origin restrictions, we cannot directly access contentDocument
-    // of YouTube chat iframe. We can only set the source and let YouTube handle the content.
-    // We can still apply settings if they're passed via URL parameters
-    chrome.storage.local.get(['showHistory'], () => {
-      // Settings retrieved
-    });
+function applySettingsToIframe(iframe, chatOverlay) {
+  iframe.onload = async () => {
+    try {
+      if (iframe.contentDocument) {
+        // Import and apply settings
+        const { applyHistoryState } = await import('./utils.js');
+        await applyHistoryState(iframe.contentDocument);
+      } else {
+        console.warn('[OverlayChat] Cannot access iframe contentDocument - cross-origin restrictions');
+      }
+    } catch (error) {
+      console.error('[OverlayChat] Error applying settings to iframe:', error);
+    } finally {
+      // Hide loading spinner after iframe loads and settings are applied
+      const spinner = chatOverlay.querySelector('#loading-spinner');
+      if (spinner) {
+        spinner.style.display = 'none';
+      }
+    }
   };
 }
 
@@ -43,8 +53,13 @@ export async function updateChatSource(chatOverlay) {
         const chatUrl = `https://www.youtube.com/live_chat?v=${videoId}`;
         const iframe = chatOverlay.querySelector('#yt-chat-iframe');
         if (iframe && iframe.src !== chatUrl) {
+          // Show loading spinner
+          const spinner = chatOverlay.querySelector('#loading-spinner');
+          if (spinner) {
+            spinner.style.display = 'flex';
+          }
           iframe.src = chatUrl;
-          hideMessageList(iframe);
+          applySettingsToIframe(iframe, chatOverlay);
         }
       } else {
         // For non-live streams, show a message or hide the chat
@@ -67,8 +82,13 @@ export async function updateChatSource(chatOverlay) {
       const chatUrl = `https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${window.location.hostname}`;
       const iframe = chatOverlay.querySelector('#yt-chat-iframe');
       if (iframe && iframe.src !== chatUrl) {
+        // Show loading spinner
+        const spinner = chatOverlay.querySelector('#loading-spinner');
+        if (spinner) {
+          spinner.style.display = 'flex';
+        }
         iframe.src = chatUrl;
-        hideMessageList(iframe);
+        applySettingsToIframe(iframe, chatOverlay);
       }
     }
   } else {
