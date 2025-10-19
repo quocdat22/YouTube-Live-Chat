@@ -47,6 +47,17 @@ export function checkIfUserLoggedIn() {
 }
 
 /**
+ * Checks if the current video is a live stream by detecting the presence of #chatframe.
+ * @returns {boolean} True if #chatframe exists (indicating a live stream), false otherwise.
+ */
+export function isLivestream() {
+  const chatframe = document.querySelector('#chatframe');
+  const isLive = chatframe !== null;
+  console.log('isLivestream check: #chatframe exists:', isLive);
+  return isLive;
+}
+
+/**
  * Checks if the video is a live stream.
  * @param {string} videoId - The YouTube video ID.
  * @returns {Promise<boolean>} A promise that resolves to true if it's a live stream.
