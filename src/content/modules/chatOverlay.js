@@ -8,10 +8,11 @@ import {
   loadSavedPosition,
   constrainPosition,
   applyInitialPosition,
-  applyInitialSize,
+  applySavedSize,
   savePosition,
   saveFinalPosition,
-  loadSavedSize,
+  loadAndValidateSize,
+  initializeSizeState,
 } from './overlayPositioning.js';
 import { setupControls } from './overlayControls.js';
 import { setupDragging } from './overlayDrag.js';
@@ -27,6 +28,9 @@ export async function showChatOverlay() {
   try {
     console.log('showChatOverlay function called');
 
+    // Initialize size state management on first load
+    initializeSizeState();
+
     // Check if overlay already exists
     const existingOverlay = document.getElementById('yt-fullscreen-chat-overlay');
     if (existingOverlay) {
@@ -35,15 +39,15 @@ export async function showChatOverlay() {
       // Restore position and size of existing overlay without animation
       try {
         const savedPosition = loadSavedPosition();
-        const savedSize = loadSavedSize();
+        const validatedSize = loadAndValidateSize();
         
         if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
           applyInitialPosition(existingOverlay, savedPosition);
         }
         
-        if (savedSize.width !== undefined && savedSize.height !== undefined) {
-          applyInitialSize(existingOverlay, savedSize);
-        }
+        // Apply validated size that accounts for current viewport
+        applySavedSize(existingOverlay, validatedSize);
+        console.log('Restored existing overlay with validated size:', validatedSize);
       } catch (error) {
         console.error('Error restoring position/size for existing overlay:', error);
       }
@@ -70,17 +74,17 @@ export async function showChatOverlay() {
     // Restore position and size WITHOUT animation immediately after adding to DOM
     try {
       const savedPosition = loadSavedPosition();
-      const savedSize = loadSavedSize();
+      const validatedSize = loadAndValidateSize();
+      
+      console.log('Creating new overlay with validated size:', validatedSize);
       
       // Apply position first
       if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
         applyInitialPosition(chatOverlay, savedPosition);
       }
       
-      // Then apply size
-      if (savedSize.width !== undefined && savedSize.height !== undefined) {
-        applyInitialSize(chatOverlay, savedSize);
-      }
+      // Then apply validated size that accounts for current viewport
+      applySavedSize(chatOverlay, validatedSize);
     } catch (error) {
       console.error('Error restoring saved position/size:', error);
     }

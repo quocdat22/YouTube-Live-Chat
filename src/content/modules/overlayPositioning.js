@@ -148,12 +148,38 @@ export function savePosition(left, top) {
 }
 
 /**
- * Constrains the size within min and max bounds.
+ * Gets dynamic max size constraints based on viewport.
+ * @returns {Object} Object with maxWidth and maxHeight based on viewport.
+ */
+export function getMaxSizeForViewport() {
+  try {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // Use 90% of viewport as max, but ensure reasonable minimums
+    const maxWidth = Math.max(400, Math.floor(viewportWidth * 0.9));
+    const maxHeight = Math.max(300, Math.floor(viewportHeight * 0.9));
+    
+    console.log('Calculated max size for viewport:', {
+      viewport: { width: viewportWidth, height: viewportHeight },
+      max: { width: maxWidth, height: maxHeight }
+    });
+    
+    return { maxWidth, maxHeight };
+  } catch (error) {
+    console.error('Error calculating max size for viewport:', error);
+    return { maxWidth: 800, maxHeight: 600 };
+  }
+}
+
+/**
+ * Centralized size constraint function that applies consistent logic.
  * @param {number} width - The desired width.
  * @param {number} height - The desired height.
+ * @param {Object} viewport - Optional viewport object {width, height}, defaults to window.
  * @returns {Object} Object with constrained width and height.
  */
-export function constrainSize(width, height) {
+export function constrainSizeForViewport(width, height, viewport = null) {
   try {
     // Validate inputs
     if (typeof width !== 'number' || typeof height !== 'number') {
@@ -163,15 +189,298 @@ export function constrainSize(width, height) {
     
     const minWidth = 200;
     const minHeight = 150;
-    const maxWidth = 800;
-    const maxHeight = 600;
-    return {
+    
+    // Get viewport-specific max constraints
+    const viewportToUse = viewport || { width: window.innerWidth, height: window.innerHeight };
+    const { maxWidth, maxHeight } = getMaxSizeForViewport();
+    
+    const originalSize = { width, height };
+    const constrainedSize = {
       width: Math.max(minWidth, Math.min(width, maxWidth)),
       height: Math.max(minHeight, Math.min(height, maxHeight)),
     };
+    
+    // Log if constraint was applied
+    const widthConstrained = originalSize.width !== constrainedSize.width;
+    const heightConstrained = originalSize.height !== constrainedSize.height;
+    
+    if (widthConstrained || heightConstrained) {
+      console.log('Size constraint applied:', {
+        original: originalSize,
+        constrained: constrainedSize,
+        limits: { minWidth, maxWidth, minHeight, maxHeight },
+        viewport: viewportToUse
+      });
+    }
+    
+    return constrainedSize;
   } catch (error) {
-    console.error('Error in constrainSize:', error);
+    console.error('Error in constrainSizeForViewport:', error);
     return { width: 200, height: 150 };
+  }
+}
+
+/**
+ * Legacy constrainSize function for backward compatibility.
+ * @param {number} width - The desired width.
+ * @param {number} height - The desired height.
+ * @returns {Object} Object with constrained width and height.
+ */
+export function constrainSize(width, height) {
+  console.warn('Using legacy constrainSize() - consider using constrainSizeForViewport() for consistent behavior');
+  return constrainSizeForViewport(width, height);
+}
+
+/**
+ * Loads and validates saved size with viewport adjustment.
+ * @returns {Object} Object with validated width and height.
+ */
+export function loadAndValidateSize() {
+  try {
+    const savedSize = loadSavedSize();
+    
+    if (!savedSize.width || !savedSize.height) {
+      console.log('No valid saved size found, using default');
+      return { width: 400, height: 300 };
+    }
+    
+    console.log('Loaded saved size:', savedSize);
+    
+    // Validate against current viewport constraints
+    const { maxWidth, maxHeight } = getMaxSizeForViewport();
+    const minWidth = 200;
+    const minHeight = 150;
+    
+    let validatedWidth = savedSize.width;
+    let validatedHeight = savedSize.height;
+    let wasAdjusted = false;
+    
+    // Apply constraints
+    if (validatedWidth < minWidth) {
+      console.log(`Width ${validatedWidth} below minimum ${minWidth}, adjusting`);
+      validatedWidth = minWidth;
+      wasAdjusted = true;
+    }
+    if (validatedWidth > maxWidth) {
+      console.log(`Width ${validatedWidth} above maximum ${maxWidth}, adjusting`);
+      validatedWidth = maxWidth;
+      wasAdjusted = true;
+    }
+    if (validatedHeight < minHeight) {
+      console.log(`Height ${validatedHeight} below minimum ${minHeight}, adjusting`);
+      validatedHeight = minHeight;
+      wasAdjusted = true;
+    }
+    if (validatedHeight > maxHeight) {
+      console.log(`Height ${validatedHeight} above maximum ${maxHeight}, adjusting`);
+      validatedHeight = maxHeight;
+      wasAdjusted = true;
+    }
+    
+    const validatedSize = { width: validatedWidth, height: validatedHeight };
+    
+    if (wasAdjusted) {
+      console.log('Size was validated and adjusted:', {
+        original: savedSize,
+        validated: validatedSize,
+        constraints: { minWidth, maxWidth, minHeight, maxHeight }
+      });
+      
+      // Save the adjusted size so it's consistent next time
+      saveSize(validatedWidth, validatedHeight);
+    } else {
+      console.log('Size validation passed:', validatedSize);
+    }
+    
+    return validatedSize;
+  } catch (error) {
+    console.error('Error in loadAndValidateSize:', error);
+    return { width: 400, height: 300 };
+  }
+}
+
+/**
+ * Size state management object for tracking different size states.
+ */
+const overlaySizeState = {
+  // Normal mode sizes (when not minimized)
+  normalWidth: 400,
+  normalHeight: 300,
+  
+  // Minimized mode sizes
+  minimizedWidth: 300,
+  minimizedHeight: 40,
+  
+  // Current mode
+  isMinimized: false,
+  
+  // Metadata
+  lastSaveTime: Date.now(),
+  lastViewportSize: { width: window.innerWidth, height: window.innerHeight },
+  
+  // Getters for current size based on mode
+  get currentWidth() {
+    return this.isMinimized ? this.minimizedWidth : this.normalWidth;
+  },
+  
+  get currentHeight() {
+    return this.isMinimized ? this.minimizedHeight : this.normalHeight;
+  },
+  
+  // Update normal size
+  updateNormalSize(width, height) {
+    console.log('Updating normal size:', { current: { width: this.normalWidth, height: this.normalHeight }, new: { width, height } });
+    this.normalWidth = width;
+    this.normalHeight = height;
+    this.lastSaveTime = Date.now();
+  },
+  
+  // Update minimized size
+  updateMinimizedSize(width, height) {
+    console.log('Updating minimized size:', { current: { width: this.minimizedWidth, height: this.minimizedHeight }, new: { width, height } });
+    this.minimizedWidth = width;
+    this.minimizedHeight = height;
+    this.lastSaveTime = Date.now();
+  },
+  
+  // Switch to minimized state
+  minimize() {
+    console.log('Switching to minimized state, saving normal size:', { width: this.normalWidth, height: this.normalHeight });
+    this.isMinimized = true;
+  },
+  
+  // Switch to normal state
+  expand() {
+    console.log('Switching to expanded state, restoring normal size:', { width: this.normalWidth, height: this.normalHeight });
+    this.isMinimized = false;
+  },
+  
+  // Save current state to localStorage
+  saveToStorage() {
+    try {
+      const sizeData = {
+        normalWidth: this.normalWidth,
+        normalHeight: this.normalHeight,
+        minimizedWidth: this.minimizedWidth,
+        minimizedHeight: this.minimizedHeight,
+        isMinimized: this.isMinimized,
+        lastSaveTime: this.lastSaveTime,
+        lastViewportSize: this.lastViewportSize
+      };
+      
+      // For backward compatibility, also save simple size
+      const simpleSize = { 
+        width: this.normalWidth, 
+        height: this.normalHeight 
+      };
+      
+      localStorage.setItem('ytChatSizeAdvanced', JSON.stringify(sizeData));
+      localStorage.setItem('ytChatSize', JSON.stringify(simpleSize));
+      
+      console.log('Size state saved to storage:', sizeData);
+    } catch (error) {
+      console.error('Error saving size state to storage:', error);
+    }
+  },
+  
+  // Load current state from localStorage
+  loadFromStorage() {
+    try {
+      // Try advanced format first
+      let stored = localStorage.getItem('ytChatSizeAdvanced');
+      if (stored) {
+        const data = JSON.parse(stored);
+        this.normalWidth = data.normalWidth || 400;
+        this.normalHeight = data.normalHeight || 300;
+        this.minimizedWidth = data.minimizedWidth || 300;
+        this.minimizedHeight = data.minimizedHeight || 40;
+        this.isMinimized = data.isMinimized || false;
+        this.lastSaveTime = data.lastSaveTime || Date.now();
+        this.lastViewportSize = data.lastViewportSize || { width: window.innerWidth, height: window.innerHeight };
+        
+        console.log('Size state loaded from advanced storage:', data);
+        return;
+      }
+      
+      // Fallback to simple format
+      const simpleSize = loadSavedSize();
+      if (simpleSize.width && simpleSize.height) {
+        this.normalWidth = simpleSize.width;
+        this.normalHeight = simpleSize.height;
+        this.isMinimized = false;
+        
+        console.log('Size state loaded from simple storage:', simpleSize);
+      }
+    } catch (error) {
+      console.error('Error loading size state from storage:', error);
+    }
+  }
+};
+
+/**
+ * Enhanced save size function that tracks normal vs minimized states.
+ * @param {number} width - The width.
+ * @param {param} height - The height.
+ * @param {boolean} isMinimized - Whether the overlay is currently minimized.
+ */
+export function saveEnhancedSize(width, height, isMinimized = false) {
+  try {
+    if (typeof width !== 'number' || typeof height !== 'number') {
+      console.warn('Invalid size parameters for enhanced saving:', { width, height });
+      return;
+    }
+    
+    // Update state based on current mode
+    if (isMinimized) {
+      overlaySizeState.updateMinimizedSize(width, height);
+    } else {
+      overlaySizeState.updateNormalSize(width, height);
+    }
+    overlaySizeState.isMinimized = isMinimized;
+    overlaySizeState.lastViewportSize = { width: window.innerWidth, height: window.innerHeight };
+    
+    // Save to storage
+    overlaySizeState.saveToStorage();
+    
+    console.log('Enhanced size saved:', {
+      size: { width, height },
+      isMinimized,
+      state: {
+        normal: { width: overlaySizeState.normalWidth, height: overlaySizeState.normalHeight },
+        minimized: { width: overlaySizeState.minimizedWidth, height: overlaySizeState.minimizedHeight }
+      }
+    });
+  } catch (error) {
+    console.error('Error in saveEnhancedSize:', error);
+  }
+}
+
+/**
+ * Gets the appropriate size based on current minimization state.
+ * @param {boolean} isMinimized - Whether the overlay is minimized.
+ * @returns {Object} Object with width and height.
+ */
+export function getSizeForState(isMinimized) {
+  if (isMinimized) {
+    return { width: overlaySizeState.minimizedWidth, height: overlaySizeState.minimizedHeight };
+  } else {
+    return { width: overlaySizeState.normalWidth, height: overlaySizeState.normalHeight };
+  }
+}
+
+/**
+ * Initialize size state from storage on module load.
+ */
+export function initializeSizeState() {
+  try {
+    overlaySizeState.loadFromStorage();
+    console.log('Size state initialized:', {
+      current: { width: overlaySizeState.currentWidth, height: overlaySizeState.currentHeight },
+      isMinimized: overlaySizeState.isMinimized,
+      lastViewportSize: overlaySizeState.lastViewportSize
+    });
+  } catch (error) {
+    console.error('Error initializing size state:', error);
   }
 }
 

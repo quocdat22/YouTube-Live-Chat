@@ -4,7 +4,7 @@
  */
 
 import { applyHistoryState } from './utils.js';
-import { loadAllSettings, updateSetting, getMinimizationState, setMinimizationState, getOriginalSize, setOriginalSize } from './stateManager.js';
+import { loadAllSettings, updateSetting, setMinimizationState, getOriginalSize, setOriginalSize } from './stateManager.js';
 
 /**
  * Sets up the control buttons for the overlay.

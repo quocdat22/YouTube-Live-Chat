@@ -2,7 +2,7 @@ import { getYouTubeVideoId, isLivestream } from 'utils/youtubeUtils.js';
 
 let observer = null;
 
-function handleUrlChange(isFullscreen, chatOverlay, hideChatOverlay, updateChatSource) {
+function handleUrlChange(isFullscreen, chatOverlay, hideChatOverlay) {
   const videoId = getYouTubeVideoId(window.location.href);
   const isLive = isLivestream();
   if (isFullscreen && (!videoId || !isLive)) {
@@ -21,9 +21,9 @@ function handleUrlChange(isFullscreen, chatOverlay, hideChatOverlay, updateChatS
   }
 }
 
-export function startObserving(isFullscreen, chatOverlay, hideChatOverlay, updateChatSource) {
+export function startObserving(isFullscreen, chatOverlay, hideChatOverlay) {
   observer = new MutationObserver(() => {
-    handleUrlChange(isFullscreen, chatOverlay, hideChatOverlay, updateChatSource);
+    handleUrlChange(isFullscreen, chatOverlay, hideChatOverlay);
   });
 
   observer.observe(document, { childList: true, subtree: true });

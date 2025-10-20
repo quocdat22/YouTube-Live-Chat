@@ -3,7 +3,7 @@
  * Handles resizing functionality for mouse and touch events.
  */
 
-import { constrainSize, saveSize } from './overlayPositioning.js';
+import { constrainSizeForViewport, saveEnhancedSize, savePosition, getMaxSizeForViewport } from './overlayPositioning.js';
 
 /**
  * Sets up resizing functionality for the overlay.
@@ -26,6 +26,12 @@ export function setupResizing(overlay) {
     let initialTop = 0;
     let resizeDirection = '';
     let animationFrameId = null;
+    
+    // Track intended vs displayed size
+    let intendedWidth = 0;
+    let intendedHeight = 0;
+    let displayWidth = 0;
+    let displayHeight = 0;
 
     function getResizeDirection(handle) {
       try {
@@ -54,6 +60,12 @@ export function setupResizing(overlay) {
           return;
         }
         
+        console.log('Resize started:', {
+          direction,
+          initialSize: { width: overlay.offsetWidth, height: overlay.offsetHeight },
+          position: { left: overlay.offsetLeft, top: overlay.offsetTop }
+        });
+        
         isResizing = true;
         resizeDirection = direction;
         resizeStartX = e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX) || 0;
@@ -62,6 +74,13 @@ export function setupResizing(overlay) {
         initialHeight = overlay.offsetHeight || 0;
         initialLeft = overlay.offsetLeft || 0;
         initialTop = overlay.offsetTop || 0;
+        
+        // Initialize tracking variables
+        intendedWidth = initialWidth;
+        intendedHeight = initialHeight;
+        displayWidth = initialWidth;
+        displayHeight = initialHeight;
+        
         overlay.style.transition = 'none';
         overlay.style.userSelect = 'none';
         document.body.style.userSelect = 'none';
@@ -97,65 +116,76 @@ export function setupResizing(overlay) {
         const deltaX = clientX - resizeStartX;
         const deltaY = clientY - resizeStartY;
 
-        let newWidth = initialWidth;
-        let newHeight = initialHeight;
+        // Calculate intended dimensions (what user is trying to drag to)
+        intendedWidth = initialWidth;
+        intendedHeight = initialHeight;
         let newLeft = initialLeft;
         let newTop = initialTop;
 
         switch (resizeDirection) {
           case 'nw':
-            newWidth = initialWidth - deltaX;
-            newHeight = initialHeight - deltaY;
+            intendedWidth = initialWidth - deltaX;
+            intendedHeight = initialHeight - deltaY;
             newLeft = initialLeft + deltaX;
             newTop = initialTop + deltaY;
             break;
           case 'ne':
-            newWidth = initialWidth + deltaX;
-            newHeight = initialHeight - deltaY;
+            intendedWidth = initialWidth + deltaX;
+            intendedHeight = initialHeight - deltaY;
             newTop = initialTop + deltaY;
             break;
           case 'sw':
-            newWidth = initialWidth - deltaX;
-            newHeight = initialHeight + deltaY;
+            intendedWidth = initialWidth - deltaX;
+            intendedHeight = initialHeight + deltaY;
             newLeft = initialLeft + deltaX;
             break;
           case 'se':
-            newWidth = initialWidth + deltaX;
-            newHeight = initialHeight + deltaY;
+            intendedWidth = initialWidth + deltaX;
+            intendedHeight = initialHeight + deltaY;
             break;
           case 'n':
-            newHeight = initialHeight - deltaY;
+            intendedHeight = initialHeight - deltaY;
             newTop = initialTop + deltaY;
             break;
           case 's':
-            newHeight = initialHeight + deltaY;
+            intendedHeight = initialHeight + deltaY;
             break;
           case 'w':
-            newWidth = initialWidth - deltaX;
+            intendedWidth = initialWidth - deltaX;
             newLeft = initialLeft + deltaX;
             break;
           case 'e':
-            newWidth = initialWidth + deltaX;
+            intendedWidth = initialWidth + deltaX;
             break;
         }
 
-        // Constrain size
-        const constrainedSize = constrainSize(newWidth, newHeight);
-        newWidth = constrainedSize.width;
-        newHeight = constrainedSize.height;
+        // Constrain size for display (what user actually sees)
+        const constrainedSize = constrainSizeForViewport(intendedWidth, intendedHeight);
+        displayWidth = constrainedSize.width;
+        displayHeight = constrainedSize.height;
 
         // Adjust position if necessary to keep within viewport
         if (newLeft < 0) newLeft = 0;
         if (newTop < 0) newTop = 0;
-        if (newLeft + newWidth > window.innerWidth)
-          newLeft = window.innerWidth - newWidth;
-        if (newTop + newHeight > window.innerHeight)
-          newTop = window.innerHeight - newHeight;
+        if (newLeft + displayWidth > window.innerWidth)
+          newLeft = window.innerWidth - displayWidth;
+        if (newTop + displayHeight > window.innerHeight)
+          newTop = window.innerHeight - displayHeight;
 
-        overlay.style.width = newWidth + 'px';
-        overlay.style.height = newHeight + 'px';
+        // Apply constrained display size and position
+        overlay.style.width = displayWidth + 'px';
+        overlay.style.height = displayHeight + 'px';
         overlay.style.left = newLeft + 'px';
         overlay.style.top = newTop + 'px';
+        
+        // Log size differences if there's a constraint
+        if (intendedWidth !== displayWidth || intendedHeight !== displayHeight) {
+          console.log('Resize in progress - size constraint applied:', {
+            intended: { width: intendedWidth, height: intendedHeight },
+            displayed: { width: displayWidth, height: displayHeight },
+            direction: resizeDirection
+          });
+        }
       } catch (error) {
         console.error('Error in performResize:', error);
       }
@@ -182,6 +212,16 @@ export function setupResizing(overlay) {
           cancelAnimationFrame(animationFrameId);
           animationFrameId = null;
         }
+        
+        const finalIntendedSize = { width: intendedWidth, height: intendedHeight };
+        const finalDisplayedSize = { width: displayWidth, height: displayHeight };
+        
+        console.log('Resize ended:', {
+          intended: finalIntendedSize,
+          displayed: finalDisplayedSize,
+          wasConstrained: finalIntendedSize.width !== finalDisplayedSize.width || finalIntendedSize.height !== finalDisplayedSize.height
+        });
+        
         isResizing = false;
         
         // Re-enable transitions for smooth positioning after resize
@@ -195,8 +235,11 @@ export function setupResizing(overlay) {
         // Trigger resize event to ensure iframe content adjusts
         window.dispatchEvent(new Event('resize'));
 
-        // Save size
-        saveSize(overlay.offsetWidth, overlay.offsetHeight);
+        // Save the intended size (what user actually dragged to), not the constrained display size
+        // This ensures consistency when loading back - the same constraints will be applied again
+        saveEnhancedSize(finalIntendedSize.width, finalIntendedSize.height, false);
+        
+        console.log('Size saved after resize:', finalIntendedSize);
 
         document.removeEventListener('mousemove', resize);
         document.removeEventListener('mouseup', endResize);
@@ -240,43 +283,96 @@ export function adjustOverlayForWindowResize(overlay) {
       return;
     }
     
-    const currentWidth = parseFloat(overlay.style.width) || 0;
-    const currentHeight = overlay.style.height;
-    const newWidth = window.innerWidth < 800 ? 250 : 400;
-    const newHeightPercent = window.innerWidth < 800 ? 0.5 : 0.7;
-    const newHeightPx = window.innerHeight * newHeightPercent;
-
-    // Preserve custom width but clamp to new max
-    overlay.style.width = Math.min(currentWidth, newWidth) + 'px';
-
-    // Preserve custom height if in px, else update to new %
-    if (String(currentHeight).includes('%')) {
-      overlay.style.height = newHeightPercent * 100 + '%';
-    } else {
-      const currentHeightPx = parseFloat(currentHeight) || 0;
-      overlay.style.height = Math.min(currentHeightPx, newHeightPx) + 'px';
+    console.log('Window resize detected - adjusting overlay:', {
+      oldViewport: { width: overlay.lastViewportWidth || 'unknown', height: overlay.lastViewportHeight || 'unknown' },
+      newViewport: { width: window.innerWidth, height: window.innerHeight }
+    });
+    
+    const currentWidth = overlay.offsetWidth;
+    const currentHeight = overlay.offsetHeight;
+    
+    // Get new max constraints based on current viewport
+    const { maxWidth, maxHeight } = getMaxSizeForViewport();
+    
+    console.log('Current overlay size vs new constraints:', {
+      current: { width: currentWidth, height: currentHeight },
+      constraints: { maxWidth, maxHeight }
+    });
+    
+    let adjustedWidth = currentWidth;
+    let adjustedHeight = currentHeight;
+    let wasAdjusted = false;
+    
+    // Only adjust if current size exceeds new constraints
+    if (currentWidth > maxWidth) {
+      adjustedWidth = maxWidth;
+      wasAdjusted = true;
+      console.log(`Width adjusted from ${currentWidth} to ${maxWidth} due to viewport constraints`);
+    }
+    
+    if (currentHeight > maxHeight) {
+      adjustedHeight = maxHeight;
+      wasAdjusted = true;
+      console.log(`Height adjusted from ${currentHeight} to ${maxHeight} due to viewport constraints`);
+    }
+    
+    // Apply size adjustments only if needed
+    if (wasAdjusted) {
+      overlay.style.width = adjustedWidth + 'px';
+      overlay.style.height = adjustedHeight + 'px';
+      
+      // Save the new adjusted size
+      saveEnhancedSize(adjustedWidth, adjustedHeight, false);
+      
+      console.log('Overlay size adjusted for viewport:', {
+        before: { width: currentWidth, height: currentHeight },
+        after: { width: adjustedWidth, height: adjustedHeight }
+      });
     }
 
-    // Adjust position if outside viewport
+    // Always adjust position to ensure overlay stays within viewport
     const rect = overlay.getBoundingClientRect();
     let newLeft = rect.left || 0;
     let newTop = rect.top || 0;
+    let positionAdjusted = false;
 
     if (rect.right > window.innerWidth) {
       newLeft = window.innerWidth - rect.width;
+      positionAdjusted = true;
     }
     if (rect.left < 0) {
       newLeft = 0;
+      positionAdjusted = true;
     }
     if (rect.bottom > window.innerHeight) {
       newTop = window.innerHeight - rect.height;
+      positionAdjusted = true;
     }
     if (rect.top < 0) {
       newTop = 0;
+      positionAdjusted = true;
     }
 
-    overlay.style.left = newLeft + 'px';
-    overlay.style.top = newTop + 'px';
+    if (positionAdjusted) {
+      overlay.style.left = newLeft + 'px';
+      overlay.style.top = newTop + 'px';
+      
+      // Save new position
+      savePosition(newLeft, newTop);
+      
+      console.log('Overlay position adjusted for viewport:', {
+        before: { left: rect.left, top: rect.top },
+        after: { left: newLeft, top: newTop }
+      });
+    }
+    
+    // Store viewport size for detection of significant changes
+    overlay.lastViewportWidth = window.innerWidth;
+    overlay.lastViewportHeight = window.innerHeight;
+    
+    if (!wasAdjusted && !positionAdjusted) {
+      console.log('No adjustments needed for window resize');
+    }
   } catch (error) {
     console.error('Error in adjustOverlayForWindowResize:', error);
   }
