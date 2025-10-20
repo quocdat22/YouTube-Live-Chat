@@ -7,11 +7,11 @@ import { createOverlayElement } from './overlayCreation.js';
 import {
   loadSavedPosition,
   constrainPosition,
-  applySavedPosition,
+  applyInitialPosition,
+  applyInitialSize,
   savePosition,
   saveFinalPosition,
   loadSavedSize,
-  applySavedSize,
 } from './overlayPositioning.js';
 import { setupControls } from './overlayControls.js';
 import { setupDragging } from './overlayDrag.js';
@@ -32,18 +32,20 @@ export async function showChatOverlay() {
     if (existingOverlay) {
       console.log('Chat overlay already exists, showing it');
 
-      // Load and apply saved position for existing overlay
+      // Restore position and size of existing overlay without animation
       try {
         const savedPosition = loadSavedPosition();
-        if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
-          applySavedPosition(existingOverlay, savedPosition);
-        }
         const savedSize = loadSavedSize();
+        
+        if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
+          applyInitialPosition(existingOverlay, savedPosition);
+        }
+        
         if (savedSize.width !== undefined && savedSize.height !== undefined) {
-          applySavedSize(existingOverlay, savedSize);
+          applyInitialSize(existingOverlay, savedSize);
         }
       } catch (error) {
-        console.error('Error loading saved position/size for existing overlay:', error);
+        console.error('Error restoring position/size for existing overlay:', error);
       }
 
       existingOverlay.style.display = 'block';
@@ -65,18 +67,22 @@ export async function showChatOverlay() {
       return null;
     }
 
-    // Load and apply saved position AFTER adding to DOM
+    // Restore position and size WITHOUT animation immediately after adding to DOM
     try {
       const savedPosition = loadSavedPosition();
-      if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
-        applySavedPosition(chatOverlay, savedPosition);
-      }
       const savedSize = loadSavedSize();
+      
+      // Apply position first
+      if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
+        applyInitialPosition(chatOverlay, savedPosition);
+      }
+      
+      // Then apply size
       if (savedSize.width !== undefined && savedSize.height !== undefined) {
-        applySavedSize(chatOverlay, savedSize);
+        applyInitialSize(chatOverlay, savedSize);
       }
     } catch (error) {
-      console.error('Error loading or applying saved position/size:', error);
+      console.error('Error restoring saved position/size:', error);
     }
 
     // Set up controls (buttons)

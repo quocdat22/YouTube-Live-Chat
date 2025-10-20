@@ -261,6 +261,77 @@ export function verifyPositionSaved() {
 }
 
 /**
+ * Applies the initial saved position without transition animation.
+ * This should be called right after element is added to DOM.
+ * @param {HTMLElement} overlay - The overlay element.
+ * @param {Object} savedPosition - The saved position object.
+ */
+export function applyInitialPosition(overlay, savedPosition) {
+  try {
+    if (!overlay) {
+      console.warn('Overlay element is null or undefined');
+      return;
+    }
+    
+    // Temporarily disable transition
+    const originalTransition = overlay.style.transition;
+    overlay.style.transition = 'none';
+    
+    // Apply saved position
+    if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
+      const constrained = constrainPosition(
+        savedPosition.left,
+        savedPosition.top,
+        overlay
+      );
+      overlay.style.left = constrained.left + 'px';
+      overlay.style.top = constrained.top + 'px';
+      overlay.style.right = 'auto';
+      console.log('Applied initial position without animation:', constrained);
+    }
+    
+    // Re-enable transition after a frame to ensure position has been applied
+    requestAnimationFrame(() => {
+      overlay.style.transition = originalTransition || 'left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease';
+    });
+  } catch (error) {
+    console.error('Error in applyInitialPosition:', error);
+  }
+}
+
+/**
+ * Applies saved size without transition animation.
+ * @param {HTMLElement} overlay - The overlay element.
+ * @param {Object} savedSize - The saved size object.
+ */
+export function applyInitialSize(overlay, savedSize) {
+  try {
+    if (!overlay) {
+      console.warn('Overlay element is null or undefined');
+      return;
+    }
+    
+    // Temporarily disable transition
+    const originalTransition = overlay.style.transition;
+    overlay.style.transition = 'none';
+    
+    if (savedSize.width !== undefined && savedSize.height !== undefined) {
+      const constrained = constrainSize(savedSize.width, savedSize.height);
+      overlay.style.width = constrained.width + 'px';
+      overlay.style.height = constrained.height + 'px';
+      console.log('Applied initial size without animation:', constrained);
+    }
+    
+    // Re-enable transition
+    requestAnimationFrame(() => {
+      overlay.style.transition = originalTransition || 'left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease';
+    });
+  } catch (error) {
+    console.error('Error in applyInitialSize:', error);
+  }
+}
+
+/**
  * Verifies that size data exists and is valid in localStorage.
  * @returns {boolean} True if valid size data exists, false otherwise.
  */

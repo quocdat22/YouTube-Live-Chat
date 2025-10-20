@@ -53,8 +53,9 @@ export function setupDragging(overlay, savePosition, constrainPosition) {
   function endDrag() {
     if (!isDragging) return;
     isDragging = false;
-    overlay.style.transition =
-      'left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease';
+    
+    // Re-enable transitions for smooth positioning after drag
+    overlay.style.transition = 'left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease';
     overlay.style.userSelect = '';
     document.body.style.userSelect = '';
 

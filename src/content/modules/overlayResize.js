@@ -183,8 +183,9 @@ export function setupResizing(overlay) {
           animationFrameId = null;
         }
         isResizing = false;
-        overlay.style.transition =
-          'left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease';
+        
+        // Re-enable transitions for smooth positioning after resize
+        overlay.style.transition = 'left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease';
         overlay.style.userSelect = '';
         document.body.style.userSelect = '';
         document.body.style.cursor = ''; // Reset cursor

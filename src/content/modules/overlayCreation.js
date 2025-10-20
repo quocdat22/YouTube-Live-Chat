@@ -1,11 +1,7 @@
-import DOMPurify from 'dompurify';
-
 /**
  * Overlay Creation Module
  * Handles the creation of the chat overlay HTML structure and initial styling.
  */
-
-import { loadSavedSize, applySavedSize, loadSavedPosition, applySavedPosition } from './overlayPositioning.js';
 
 /**
  * Creates the chat overlay element with initial structure and styles.
@@ -226,7 +222,7 @@ export function createOverlayElement() {
   resizeHandles.forEach(handle => chatOverlay.appendChild(handle));
   chatOverlay.appendChild(settingsModal);
 
-  // Position the overlay with responsive dimensions
+  // // Position the overlay with responsive dimensions - NO initial position setting here
   chatOverlay.style.position = 'fixed';
   const initialWidth = window.innerWidth < 800 ? 250 : 400;
   const initialHeight = window.innerWidth < 800 ? '150px' : '200px';
@@ -239,24 +235,12 @@ export function createOverlayElement() {
   chatOverlay.style.fontFamily = 'Arial, sans-serif';
   chatOverlay.style.color = 'white';
 
-  // Load and apply saved position first
-  const savedPosition = loadSavedPosition();
-  if (savedPosition.left !== undefined && savedPosition.top !== undefined) {
-    applySavedPosition(chatOverlay, savedPosition);
-  } else {
-    // Set default position only if no saved position exists
-    const initialLeft = window.innerWidth - initialWidth - 10;
-    chatOverlay.style.left = initialLeft + 'px';
-    chatOverlay.style.top = '10%';
-  }
+  // Set default position only - will be overridden by chatOverlay.js
+  const initialLeft = window.innerWidth - initialWidth - 10;
+  chatOverlay.style.left = initialLeft + 'px';
+  chatOverlay.style.top = '10%';
 
-  // Load and apply saved size
-  const savedSize = loadSavedSize();
-  applySavedSize(chatOverlay, savedSize);
-
-  // Add smooth transitions
-  chatOverlay.style.transition =
-    'left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease';
+  // IMPORTANT: No transitions applied here - will be added after positioning is complete
 
   return chatOverlay;
 }
