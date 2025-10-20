@@ -2,6 +2,7 @@
  * Overlay Drag Module
  * Handles dragging functionality using modern Pointer Events API with comprehensive
  * focus loss prevention and sticky movement issue fixes.
+ * Includes smart drag vs click detection to prevent button interference.
  */
 
 /**
@@ -12,13 +13,22 @@
  */
 export function setupDragging(overlay, savePosition, constrainPosition) {
   const chatHeader = overlay.querySelector('#chat-header');
+  const chatTitle = overlay.querySelector('#chat-title');
   let isDragging = false;
+  let isDragInitiated = false;
+  let isDragTracking = false;
   let dragStartX = 0;
   let dragStartY = 0;
   let initialLeft = 0;
   let initialTop = 0;
   let currentPointerId = null;
   let dragTimeout = null;
+  let totalMovementDistance = 0;
+
+  // Drag threshold: minimum movement (in pixels) before drag is initiated
+  const DRAG_THRESHOLD = 8;
+  // Time threshold: maximum time (in ms) before drag is initiated without movement
+  const TIME_THRESHOLD = 300;
 
   // Track event listeners for proper cleanup
   const dragListeners = {
@@ -30,72 +40,152 @@ export function setupDragging(overlay, savePosition, constrainPosition) {
   };
 
   /**
-   * Starts the drag operation with pointer capture.
-   * @param {PointerEvent} e - The pointer event.
+   * Determines if a pointer event target is a button or within a button.
+   * @param {Element} target - The event target element.
+   * @returns {boolean} True if target is a button or within a button.
    */
-  function startDrag(e) {
-    // Only handle primary pointer (left mouse button or touch)
-    if (e.isPrimary && e.button === 0) {
-      console.log('Drag started: isDragging = true, pointerId =', e.pointerId);
-      
-      isDragging = true;
-      currentPointerId = e.pointerId;
-      dragStartX = e.clientX;
-      dragStartY = e.clientY;
-      initialLeft = overlay.offsetLeft;
-      initialTop = overlay.offsetTop;
-      
-      // Disable transitions and user selection during drag
-      overlay.style.transition = 'none';
-      overlay.style.userSelect = 'none';
-      overlay.style.webkitUserSelect = 'none';
-      document.body.style.userSelect = 'none';
-      document.body.style.webkitUserSelect = 'none';
-      
-      e.preventDefault();
-      
-      // Set pointer capture to ensure we receive all pointer events
-      // even when pointer moves outside the header element
-      try {
-        chatHeader.setPointerCapture(e.pointerId);
-        console.log('Pointer capture set for pointerId:', e.pointerId);
-      } catch (error) {
-        console.warn('Failed to set pointer capture:', error);
-      }
-      
-      // Add event listeners
-      addDragListeners();
-      
-      // Set auto-reset timeout as fallback (5 seconds)
-      dragTimeout = setTimeout(() => {
-        if (isDragging) {
-          console.warn('Auto-reset timeout triggered - ending drag');
-          endDrag();
-        }
-      }, 5000);
-    }
+  function isButtonTarget(target) {
+    return target.tagName === 'BUTTON' || target.closest('button');
   }
 
   /**
-   * Handles the drag movement.
+   * Starts tracking potential drag operation (no pointer capture yet).
+   * @param {PointerEvent} e - The pointer event.
+   */
+  function startDragTracking(e) {
+    // Only handle primary pointer (left mouse button or touch)
+    if (!e.isPrimary || e.button !== 0) {
+      return;
+    }
+
+    // Check if clicking on a button - if so, let the button handle the click
+    if (isButtonTarget(e.target)) {
+      console.log('Button click detected - skipping drag initiation');
+      return;
+    }
+
+    console.log('Drag tracking started: pointerId =', e.pointerId);
+    
+    isDragTracking = true;
+    currentPointerId = e.pointerId;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    initialLeft = overlay.offsetLeft;
+    initialTop = overlay.offsetTop;
+    totalMovementDistance = 0;
+    
+    // Add event listeners for tracking
+    addDragListeners();
+    
+    // Set timeout to cancel drag tracking if no movement occurs
+    dragTimeout = setTimeout(() => {
+      if (isDragTracking && !isDragInitiated) {
+        console.log('Drag tracking timeout - was likely a click');
+        cancelDragTracking();
+      }
+    }, TIME_THRESHOLD);
+  }
+
+  /**
+   * Initiates actual drag with pointer capture.
+   */
+  function initiateActualDrag() {
+    if (isDragInitiated) return;
+    
+    console.log('Drag initiated: isDragging = true, pointerId =', currentPointerId);
+    
+    isDragInitiated = true;
+    isDragging = true;
+    
+    // Clear the timeout since we're now in drag mode
+    if (dragTimeout) {
+      clearTimeout(dragTimeout);
+      dragTimeout = null;
+    }
+    
+    // Disable transitions and user selection during drag
+    overlay.style.transition = 'none';
+    overlay.style.userSelect = 'none';
+    overlay.style.webkitUserSelect = 'none';
+    document.body.style.userSelect = 'none';
+    document.body.style.webkitUserSelect = 'none';
+    
+    // Set pointer capture to ensure we receive all pointer events
+    // even when pointer moves outside the header element
+    try {
+      chatHeader.setPointerCapture(currentPointerId);
+      console.log('Pointer capture set for pointerId:', currentPointerId);
+    } catch (error) {
+      console.warn('Failed to set pointer capture:', error);
+    }
+    
+    // Set auto-reset timeout as fallback (5 seconds)
+    dragTimeout = setTimeout(() => {
+      if (isDragging) {
+        console.warn('Auto-reset timeout triggered - ending drag');
+        endDrag();
+      }
+    }, 5000);
+  }
+
+  /**
+   * Cancels drag tracking without initiating drag.
+   */
+  function cancelDragTracking() {
+    if (!isDragTracking) return;
+    
+    console.log('Drag tracking cancelled');
+    
+    isDragTracking = false;
+    currentPointerId = null;
+    totalMovementDistance = 0;
+    
+    // Clear timeout
+    if (dragTimeout) {
+      clearTimeout(dragTimeout);
+      dragTimeout = null;
+    }
+    
+    // Remove listeners
+    removeDragListeners();
+  }
+
+  /**
+   * Handles the drag movement during both tracking and actual drag phases.
    * @param {PointerEvent} e - The pointer move event.
    */
   function drag(e) {
+    // Only process events for the current pointer
+    if (!isDragTracking || e.pointerId !== currentPointerId) {
+      return;
+    }
+
+    // Calculate movement distance
+    const deltaX = e.clientX - dragStartX;
+    const deltaY = e.clientY - dragStartY;
+    const movementDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    totalMovementDistance += movementDistance;
+
+    // If we haven't initiated drag yet, check if we should
+    if (!isDragInitiated) {
+      if (totalMovementDistance > DRAG_THRESHOLD) {
+        // Movement exceeds threshold - initiate actual drag
+        initiateActualDrag();
+      } else {
+        // Still in tracking phase - don't move overlay yet
+        return;
+      }
+    }
+
     // State validation - prevent processing if not in dragging state
     if (!isDragging) {
       console.warn('Drag called but isDragging is false - ignoring');
       return;
     }
-    
-    // Only process events for the current pointer
-    if (e.pointerId !== currentPointerId) {
-      return;
-    }
-    
-    const clientX = e.clientX;
-    const clientY = e.clientY;
-    let newLeft = initialLeft + (clientX - dragStartX);
-    let newTop = initialTop + (clientY - dragStartY);
+
+    // Calculate new position
+    let newLeft = initialLeft + deltaX;
+    let newTop = initialTop + deltaY;
 
     // Constrain to viewport
     const constrained = constrainPosition(newLeft, newTop, overlay);
@@ -108,53 +198,59 @@ export function setupDragging(overlay, savePosition, constrainPosition) {
 
   /**
    * Ends the drag operation with comprehensive cleanup.
+   * Handles both tracking phase and initiated drag phase.
    */
   function endDrag() {
-    // Prevent multiple calls to endDrag
-    if (!isDragging) {
-      console.log('endDrag called but isDragging is already false - ignoring');
+    // Prevent multiple calls
+    if (!isDragTracking) {
+      console.log('endDrag called but not tracking - ignoring');
       return;
     }
     
-    console.log('Drag ended: isDragging = false');
-    
-    // Reset dragging state first
-    isDragging = false;
+    const wasInitiated = isDragInitiated;
     const pointerId = currentPointerId;
-    currentPointerId = null;
     
-    // Clear auto-reset timeout
+    console.log('Drag ended: wasInitiated =', wasInitiated, ', pointerId =', pointerId);
+    
+    // Reset all drag states
+    isDragTracking = false;
+    isDragInitiated = false;
+    isDragging = false;
+    currentPointerId = null;
+    totalMovementDistance = 0;
+    
+    // Clear timeout
     if (dragTimeout) {
       clearTimeout(dragTimeout);
       dragTimeout = null;
     }
     
-    // Release pointer capture
-    if (pointerId !== null) {
+    // Release pointer capture only if we had set it
+    if (wasInitiated && pointerId !== null) {
       try {
         chatHeader.releasePointerCapture(pointerId);
         console.log('Pointer capture released for pointerId:', pointerId);
       } catch (error) {
         console.warn('Failed to release pointer capture:', error);
       }
-    }
-    
-    // Remove event listeners before restoring styles
-    removeDragListeners();
-    
-    // Re-enable transitions and user selection
-    overlay.style.transition = 'left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease';
-    overlay.style.userSelect = '';
-    overlay.style.webkitUserSelect = '';
-    document.body.style.userSelect = '';
-    document.body.style.webkitUserSelect = '';
+      
+      // Re-enable transitions and user selection only if drag was initiated
+      overlay.style.transition = 'left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease';
+      overlay.style.userSelect = '';
+      overlay.style.webkitUserSelect = '';
+      document.body.style.userSelect = '';
+      document.body.style.webkitUserSelect = '';
 
-    // Save final position
-    try {
-      savePosition(overlay.offsetLeft, overlay.offsetTop);
-    } catch (error) {
-      console.error('Error saving position:', error);
+      // Save final position only if drag was initiated (i.e., user actually dragged)
+      try {
+        savePosition(overlay.offsetLeft, overlay.offsetTop);
+      } catch (error) {
+        console.error('Error saving position:', error);
+      }
     }
+    
+    // Remove event listeners
+    removeDragListeners();
   }
 
   /**
@@ -162,7 +258,7 @@ export function setupDragging(overlay, savePosition, constrainPosition) {
    * @param {PointerEvent} e - The pointer cancel event.
    */
   function handlePointerCancel(e) {
-    if (e.pointerId === currentPointerId) {
+    if (isDragTracking && e.pointerId === currentPointerId) {
       console.log('Pointer cancel event received - ending drag');
       endDrag();
     }
@@ -172,7 +268,7 @@ export function setupDragging(overlay, savePosition, constrainPosition) {
    * Handles window blur events to stop dragging when window loses focus.
    */
   function handleWindowBlur() {
-    if (isDragging) {
+    if (isDragTracking) {
       console.log('Window lost focus during drag - ending drag');
       endDrag();
     }
@@ -183,7 +279,7 @@ export function setupDragging(overlay, savePosition, constrainPosition) {
    * @param {KeyboardEvent} e - The keyboard event.
    */
   function handleKeyDown(e) {
-    if (isDragging && e.key === 'Escape') {
+    if (isDragTracking && e.key === 'Escape') {
       console.log('Escape key pressed during drag - cancelling drag');
       e.preventDefault();
       endDrag();
@@ -238,11 +334,23 @@ export function setupDragging(overlay, savePosition, constrainPosition) {
     console.log('All drag listeners removed');
   }
 
-  // Add pointer event listener for starting drag (replaces mousedown and touchstart)
-  chatHeader.addEventListener('pointerdown', startDrag);
+  // Add pointer event listener for starting drag tracking (replaces mousedown and touchstart)
+  chatHeader.addEventListener('pointerdown', startDragTracking);
   
-  // Set CSS pointer-events property for better handling
+  // Set CSS properties for better handling
   chatHeader.style.touchAction = 'none'; // Prevent default touch actions
   
-  console.log('Drag functionality initialized with Pointer Events API');
+  // Add visual feedback - make title area draggable and buttons clickable
+  if (chatTitle) {
+    chatTitle.style.cursor = 'move'; // Show move cursor over title
+    chatTitle.classList.add('draggable-area');
+  }
+  
+  // Ensure buttons have pointer cursor
+  const buttons = chatHeader.querySelectorAll('button');
+  buttons.forEach(button => {
+    button.style.cursor = 'pointer';
+  });
+  
+  console.log('Drag functionality initialized with smart click vs drag detection');
 }
